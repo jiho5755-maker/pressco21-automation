@@ -2,6 +2,7 @@
 
 // 직원 테이블 — 검색 + 목록 + 직원 추가 Dialog
 import { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Search } from "lucide-react";
@@ -90,7 +91,12 @@ export function EmployeeTable({ employees, departments }: EmployeeTableProps) {
                     </TableCell>
                     <TableCell className="font-medium">
                       <div>
-                        {emp.name}
+                        <Link
+                          href={`/employees/${emp.id}`}
+                          className="hover:underline text-primary"
+                        >
+                          {emp.name}
+                        </Link>
                         {contractCfg &&
                           emp.contractType !== "REGULAR" && (
                             <Badge

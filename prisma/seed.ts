@@ -249,7 +249,61 @@ async function main() {
   });
   console.log("  한예슬 출산휴가 LeaveRecord 생성");
 
-  // ─── 5. WorkSchedule (유연근무 직원만) ───
+  // ─── 5. 연차/휴가 LeaveRecord 추가 ───
+  const annualLeaves = [
+    {
+      employeeId: employeeMap["EMP001"],
+      type: "ANNUAL",
+      startDate: new Date("2026-01-06"),
+      endDate: new Date("2026-01-06"),
+      days: 1,
+      status: "APPROVED",
+      reason: "개인 사유",
+    },
+    {
+      employeeId: employeeMap["EMP001"],
+      type: "ANNUAL",
+      startDate: new Date("2026-01-20"),
+      endDate: new Date("2026-01-20"),
+      days: 0.5,
+      status: "APPROVED",
+      reason: "오전 반차 (병원)",
+    },
+    {
+      employeeId: employeeMap["EMP002"],
+      type: "ANNUAL",
+      startDate: new Date("2026-01-13"),
+      endDate: new Date("2026-01-14"),
+      days: 2,
+      status: "APPROVED",
+      reason: "가족 행사",
+    },
+    {
+      employeeId: employeeMap["EMP003"],
+      type: "ANNUAL",
+      startDate: new Date("2026-02-09"),
+      endDate: new Date("2026-02-09"),
+      days: 1,
+      status: "PENDING",
+      reason: "개인 사유",
+    },
+    {
+      employeeId: employeeMap["EMP005"],
+      type: "ANNUAL",
+      startDate: new Date("2025-12-29"),
+      endDate: new Date("2025-12-31"),
+      days: 3,
+      status: "APPROVED",
+      reason: "연말 휴가",
+    },
+  ];
+
+  for (const leave of annualLeaves) {
+    await prisma.leaveRecord.create({ data: leave });
+  }
+  console.log(`  연차 LeaveRecord ${annualLeaves.length}건 생성`);
+
+  // ─── 6. WorkSchedule (유연근무 직원만) ───
   const effectiveFrom = new Date("2025-01-01");
 
   // 김민수 EMP001: 시차출퇴근 월~금 10:00-19:00
@@ -332,7 +386,7 @@ async function main() {
 
   console.log("  유연근무 직원 5명 WorkSchedule 생성");
 
-  // ─── 6. 경비 5건 ───
+  // ─── 7. 경비 5건 ───
   const expensesData = [
     {
       title: "출장 택시비",
