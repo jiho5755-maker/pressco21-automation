@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { authActionClient, ActionError } from "@/lib/safe-action";
 import { POSITIONS } from "@/lib/constants";
+import { validateMinimumWage } from "@/lib/validations/salary";
 
 // ── 직원 추가 스키마 ──
 const createEmployeeSchema = z.object({
@@ -15,6 +16,8 @@ const createEmployeeSchema = z.object({
   joinDate: z.string().min(1, "입사일을 입력해주세요."),
   email: z.email("올바른 이메일 형식이 아닙니다.").optional().or(z.literal("")),
   phone: z.string().optional(),
+  address: z.string().optional().or(z.literal("")),
+  childrenUnder20: z.coerce.number().int().min(0).max(20).default(0),
   contractType: z
     .enum(["REGULAR", "CONTRACT", "PARTTIME", "REPLACEMENT"])
     .default("REGULAR"),
@@ -42,6 +45,8 @@ export const createEmployee = authActionClient
         joinDate: new Date(parsedInput.joinDate),
         email: parsedInput.email || null,
         phone: parsedInput.phone || null,
+        address: parsedInput.address || null,
+        childrenUnder20: parsedInput.childrenUnder20 || 0,
         contractType: parsedInput.contractType,
       },
     });
@@ -59,6 +64,8 @@ const updateEmployeeSchema = z.object({
   position: z.enum(POSITIONS).optional(),
   email: z.email().optional().or(z.literal("")),
   phone: z.string().optional(),
+  address: z.string().optional().or(z.literal("")),
+  childrenUnder20: z.coerce.number().int().min(0).max(20).optional(),
   contractType: z
     .enum(["REGULAR", "CONTRACT", "PARTTIME", "REPLACEMENT"])
     .optional(),
@@ -76,6 +83,7 @@ export const updateEmployee = authActionClient
       data: {
         ...data,
         email: data.email === "" ? null : data.email,
+        address: data.address === "" ? null : data.address,
       },
     });
 
@@ -126,18 +134,30 @@ export const bulkUpdateWorkType = authActionClient
   });
 
 // ── 급여/보험 정보 수정 ──
-const updateEmployeeSalarySchema = z.object({
-  id: z.string(),
-  salaryType: z.enum(["MONTHLY", "HOURLY"]),
-  baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
-  bankName: z.string().optional().or(z.literal("")),
-  bankAccount: z.string().optional().or(z.literal("")),
-  nationalPension: z.boolean(),
-  healthInsurance: z.boolean(),
-  employmentInsurance: z.boolean(),
-  industrialAccident: z.boolean(),
-  dependents: z.number().min(0).default(1),
-});
+const updateEmployeeSalarySchema = z
+  .object({
+    id: z.string(),
+    salaryType: z.enum(["MONTHLY", "HOURLY"]),
+    baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
+    bankName: z.string().optional().or(z.literal("")),
+    bankAccount: z.string().optional().or(z.literal("")),
+    nationalPension: z.boolean(),
+    healthInsurance: z.boolean(),
+    employmentInsurance: z.boolean(),
+    industrialAccident: z.boolean(),
+    dependents: z.number().min(0).default(1),
+    childrenUnder20: z.coerce.number().int().min(0).max(20).default(0),
+  })
+  .superRefine((data, ctx) => {
+    const validation = validateMinimumWage(data.baseSalary, data.salaryType);
+    if (!validation.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: validation.message || "최저임금 미달",
+        path: ["baseSalary"],
+      });
+    }
+  });
 
 export const updateEmployeeSalary = authActionClient
   .inputSchema(updateEmployeeSalarySchema)

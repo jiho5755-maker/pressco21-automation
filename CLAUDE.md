@@ -26,11 +26,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 노무/보험 상수 정의 (constants.ts, ui-config.ts)
 - 시드 데이터 (관리자1+부서6+직원11+경비5+근무스케줄25)
 
-**🚧 Phase 1 진행 예정 (근태/급여)**
-1. 직원 관리 고도화 (상세 페이지 완료, 수정 기능 완료)
-2. 근태 관리 (/attendance)
-3. 휴가 관리 (/leaves)
-4. 급여 관리 (/payroll)
+**🚧 Phase 1 진행 중 (근태/급여)**
+1. ~~직원 관리 고도화~~ ✅ (상세 페이지 4탭 + 수정 Dialog + 연차/급여 계산 유틸)
+2. 근태 관리 (/attendance) — 플레이스홀더 생성 완료
+3. 휴가 관리 (/leaves) — 플레이스홀더 생성 완료
+4. 급여 관리 (/payroll) — 플레이스홀더 생성 완료
 5. 대시보드 리뉴얼
 
 **📋 Phase 2 계획 (정부지원사업 관리)**
@@ -93,19 +93,25 @@ npx prisma generate              # Prisma Client 재생성
 │   │   │   └── settings/       # 설정
 │   │   └── layout.tsx          # Root (Geist 폰트, Toaster)
 │   ├── actions/                # Server Actions
-│   │   ├── employee-actions.ts # 직원 CRUD
+│   │   ├── employee-actions.ts # 직원 CRUD + 수정 (updateEmployee, updateEmployeeSalary, updateEmployeeWork, bulkUpdateWorkType)
 │   │   └── expense-actions.ts  # 경비 CRUD
 │   ├── components/
 │   │   ├── layout/             # 레이아웃 컴포넌트 (Sidebar, nav-items.ts)
-│   │   ├── ui/                 # shadcn/ui 컴포넌트 (22개)
-│   │   └── shared/             # 공유 컴포넌트 (PageHeader, StatCard 등)
+│   │   ├── ui/                 # shadcn/ui 컴포넌트 (19개)
+│   │   ├── shared/             # 공유 컴포넌트 (PageHeader, StatCard 등)
+│   │   ├── employees/          # 직원 컴포넌트 (8개: 테이블, 상세헤더, 4탭, 추가/수정 Dialog)
+│   │   └── expenses/           # 경비 컴포넌트 (폼, 내역 테이블)
 │   ├── lib/
 │   │   ├── auth.ts             # Auth.js v5 설정
 │   │   ├── prisma.ts           # Prisma Client 싱글톤
 │   │   ├── safe-action.ts      # next-safe-action 클라이언트
 │   │   ├── constants.ts        # 노무/보험/지원금 상수
-│   │   ├── ui-config.ts        # Badge 스타일 설정
-│   │   └── utils.ts            # cn() 유틸
+│   │   ├── ui-config.ts        # Badge 스타일 설정 (employee/expense/contract/workType/leaveType)
+│   │   ├── utils.ts            # cn() 유틸
+│   │   ├── leave-calculator.ts # 연차 계산 (calculateTotalAnnualLeave, getAnnualLeaveSummary)
+│   │   ├── salary-calculator.ts # 급여/4대보험 계산 (calculateMonthlyInsurance, formatCurrency)
+│   │   └── validations/
+│   │       └── salary.ts       # 최저임금 검증 (validateMinimumWage)
 │   └── types/
 │       └── index.ts            # NavGroup, NavItem 등 공통 타입
 ├── middleware.ts               # Auth.js v5 미들웨어 (인증 보호)
@@ -173,6 +179,23 @@ export function MyForm() {
 }
 ```
 
+### 직원 상세 페이지 아키텍처
+
+`/employees/[id]`는 탭 기반 상세 페이지로, 여러 파일이 협력하는 핵심 패턴:
+
+```
+employees/[id]/page.tsx (Server Component, DB 조회)
+  └→ employee-detail-header.tsx (상태 Badge, 수정 Dialog 트리거)
+  └→ Tabs: 기본정보 / 근무정보 / 급여·보험 / 휴가
+       ├→ employee-info-tab.tsx
+       ├→ employee-work-tab.tsx
+       ├→ employee-salary-tab.tsx (salary-calculator.ts 활용)
+       └→ employee-leave-tab.tsx (leave-calculator.ts 활용)
+  └→ employee-edit-dialog.tsx ("use client", RHF+Zod, 3개 Server Action 호출)
+```
+
+수정 Dialog는 탭별로 다른 Server Action을 호출: `updateEmployee` (기본정보), `updateEmployeeSalary` (급여), `updateEmployeeWork` (근무).
+
 ### 사이드바 네비게이션
 
 `src/components/layout/nav-items.ts`에서 `NavGroup[]` 배열로 메뉴 그룹 정의 (메인/인사관리/재무/시스템). `NavGroup`, `NavItem` 타입은 `src/types/index.ts`.
@@ -185,11 +208,14 @@ export function MyForm() {
   - `MATERNITY_PARENTAL_2026`: 출산휴가, 육아휴직, 연차 법정 기준
   - `GOVERNMENT_SUBSIDIES_2026`: 유연근무 장려금, 대체인력 지원금 등
   - 상태/유형 매핑: `POSITIONS`, `EMPLOYEE_STATUS`, `CONTRACT_TYPES`, `WORK_TYPES`, `LEAVE_TYPES` 등
-- `src/lib/ui-config.ts`: 상태별 Badge 스타일 매핑 (employeeStatusConfig, expenseStatusBadgeConfig)
+- `src/lib/ui-config.ts`: 상태별 Badge 스타일 매핑 (employeeStatusConfig, expenseStatusBadgeConfig, contractTypeConfig, workTypeConfig, leaveTypeConfig)
 - `src/lib/utils.ts`: `cn()` 유틸 (clsx + tailwind-merge)
 - `src/lib/prisma.ts`: Prisma 클라이언트 싱글톤
 - `src/lib/auth.ts`: Auth.js v5 설정 (Credentials + PrismaAdapter + JWT)
 - `src/lib/safe-action.ts`: next-safe-action 클라이언트 (actionClient, authActionClient)
+- `src/lib/leave-calculator.ts`: 연차 계산 순수 함수 (근로기준법 제60조 기반, 입사일 기준)
+- `src/lib/salary-calculator.ts`: 통상시급, 4대보험 공제액 계산, `formatCurrency()` 포매팅
+- `src/lib/validations/salary.ts`: 최저임금 검증 함수
 
 ## 핵심 규칙 및 코딩 컨벤션
 
@@ -226,6 +252,7 @@ export function MyForm() {
   - 대체인력 자기참조: `replacementForId` → `replacementFor` 관계
   - 유연근무 설정: workType, flexStartTime, remoteWorkDays(JSON)
   - 휴직 상태: status, leaveType, leaveStartDate, leaveEndDate
+  - 주소: `address` (선택), 자녀세액공제용: `childrenUnder20` (기본 0)
 
 ### 근태 및 휴가
 - **WorkSchedule**: 요일별 근무시간 스케줄 (시차출퇴근 지원, effectiveFrom/To로 이력 관리)
@@ -287,3 +314,48 @@ NEXT_PUBLIC_APP_NAME=사내 자동화 도구       # 앱 이름 (UI에 표시)
 - 출산휴가/육아휴직은 자녀 출생일 기준으로 자동 계산
 - 대체인력 지원금 신청을 위해 `replacementForId`, `replacementReason` 필드 정확히 관리
 - 근태 기록(`AttendanceRecord`)은 정부 지원금 증빙 자료이므로 `isConfirmed` 필드로 관리자 확인 필수
+
+## 서브에이전트 시스템
+
+16개 전문가 에이전트가 `.claude/agents/`에 정의되어 있다. 에이전트는 **자문관/검토자** 역할이며, 코드 작성은 메인이 직접 수행한다.
+
+### 에이전트 조직도
+
+| 부서 | 에이전트 | 모델 | 역할 |
+|------|---------|------|------|
+| **기획실** | product-manager | sonnet | 요구사항 정의, 도메인 자문 라우팅 |
+| **기술본부** | fullstack-architect | sonnet | 아키텍처/페이지 설계 |
+| | db-architect | sonnet | DB 스키마, 마이그레이션 |
+| | ui-ux-advisor | sonnet | UI/UX 설계, 컴포넌트 구조 |
+| | devops-engineer | sonnet | 빌드, 타입 검사, 배포 |
+| **도메인자문단** | hr-labor-expert | opus | 근로기준법, 연차, 모성보호 |
+| | payroll-tax-expert | opus | 급여 계산, 4대보험, 소득세 |
+| | employment-subsidy-expert | opus | 고용지원금, 출산육아기 지원 |
+| | sme-policy-expert | sonnet | 중소기업 정책자금, 판로지원 |
+| | tax-incentive-expert | sonnet | 세제혜택, 두루누리 |
+| | document-admin-expert | sonnet | 법정 서식, 전자결재 |
+| | accounting-expert | sonnet | 급여대장, 원천징수, Excel |
+| **품질본부** | code-reviewer | sonnet | 코드 품질, 패턴, 타입 안전성 |
+| | security-auditor | sonnet | 보안 취약점, RBAC, 데이터 보호 |
+| | qa-engineer | sonnet | 테스트 설계/작성 |
+| | technical-writer | haiku | 문서 정리, MEMORY 갱신 |
+
+### 검증 프로토콜
+
+| 프로토콜 | 에이전트 | 실행 방식 | 사용 시점 |
+|---------|---------|----------|----------|
+| **P0 기획** | product-manager | 단독 | 새 기능 기획 시 |
+| **P1 설계 리뷰** | fullstack + db + ui-ux | 3개 병렬 | 아키텍처 결정 시 |
+| **P2 품질 게이트** | code-reviewer + security + devops + qa | 4개 병렬 | 구현 완료 후 |
+| **P3 교차검증** | hr → payroll → qa | 순차 | 급여/노무 정확성 필수 시 |
+| **P4 스키마 검증** | db → security + fullstack | 순차+병렬 | DB 스키마 변경 시 |
+
+### 비용 인식
+
+| 모델 | 에이전트 | 사용 기준 |
+|------|---------|----------|
+| opus (높음) | hr-labor, payroll-tax, employment-subsidy | 법적/재무적 정확성 필수 시만 |
+| sonnet (보통) | 나머지 12개 | 일반적 사용 |
+| haiku (낮음) | technical-writer | 문서 정리 |
+
+간단한 질문은 에이전트 없이 직접 답변한다. 에이전트는 전문성이 필요한 경우에만 호출.

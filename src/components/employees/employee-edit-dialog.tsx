@@ -1,12 +1,17 @@
 "use client";
 
-// 직원 정보 수정 Dialog — 탭별 수정 (기본정보, 근무, 급여/보험)
-import { useState, useTransition } from "react";
-import { Pencil } from "lucide-react";
+// 직원 정보 수정 Dialog — 탭별 Zod + RHF 폼
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod/v4";
+import { useAction } from "next-safe-action/hooks";
+import { Pencil, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +22,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { POSITIONS, WORK_TYPES, WEEKDAYS } from "@/lib/constants";
+import { validateMinimumWage } from "@/lib/validations/salary";
 import {
   updateEmployee,
   updateEmployeeSalary,
@@ -37,126 +51,188 @@ interface EmployeeEditDialogProps {
   departments: Department[];
 }
 
+// ── 기본정보 탭 스키마 ──
+const infoSchema = z.object({
+  name: z.string().min(2, "이름은 2자 이상 입력해주세요."),
+  departmentId: z.string(),
+  position: z.enum(POSITIONS),
+  email: z
+    .string()
+    .email("올바른 이메일 형식이 아닙니다.")
+    .optional()
+    .or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional().or(z.literal("")),
+  childrenUnder20: z.number().int().min(0).max(20),
+});
+
+// ── 근무 탭 스키마 ──
+const workSchema = z.object({
+  workType: z.enum(["OFFICE", "FLEXIBLE_HOURS", "REMOTE", "HYBRID"]),
+  weeklyWorkHours: z.number().min(1).max(52),
+  workStartTime: z.string().regex(/^\d{2}:\d{2}$/, "HH:mm 형식으로 입력해주세요."),
+  workEndTime: z.string().regex(/^\d{2}:\d{2}$/, "HH:mm 형식으로 입력해주세요."),
+  breakMinutes: z.number().min(0),
+  flexStartTime: z.string().optional().or(z.literal("")),
+  flexEndTime: z.string().optional().or(z.literal("")),
+  remoteWorkDays: z.array(z.enum(["MON", "TUE", "WED", "THU", "FRI"])).optional(),
+});
+
+// ── 급여/보험 탭 스키마 ──
+const salarySchema = z
+  .object({
+    salaryType: z.enum(["MONTHLY", "HOURLY"]),
+    baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
+    bankName: z.string().optional().or(z.literal("")),
+    bankAccount: z.string().optional().or(z.literal("")),
+    nationalPension: z.boolean(),
+    healthInsurance: z.boolean(),
+    employmentInsurance: z.boolean(),
+    industrialAccident: z.boolean(),
+    dependents: z.number().min(0),
+    childrenUnder20: z.number().int().min(0).max(20),
+  })
+  .superRefine((data, ctx) => {
+    const validation = validateMinimumWage(data.baseSalary, data.salaryType);
+    if (!validation.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: validation.message || "최저임금 미달",
+        path: ["baseSalary"],
+      });
+    }
+  });
+
+type InfoFormValues = z.infer<typeof infoSchema>;
+type WorkFormValues = z.infer<typeof workSchema>;
+type SalaryFormValues = z.infer<typeof salarySchema>;
+
 export function EmployeeEditDialog({
   employee,
   departments,
 }: EmployeeEditDialogProps) {
   const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("info");
 
-  // 기본정보 상태
-  const [name, setName] = useState(employee.name);
-  const [departmentId, setDepartmentId] = useState(employee.departmentId);
-  const [position, setPosition] = useState(employee.position);
-  const [email, setEmail] = useState(employee.email || "");
-  const [phone, setPhone] = useState(employee.phone || "");
+  // ── 기본정보 폼 ──
+  const infoForm = useForm<InfoFormValues>({
+    resolver: zodResolver(infoSchema),
+    defaultValues: {
+      name: employee.name,
+      departmentId: employee.departmentId,
+      position: employee.position as (typeof POSITIONS)[number],
+      email: employee.email || "",
+      phone: employee.phone || "",
+      address: employee.address || "",
+      childrenUnder20: employee.childrenUnder20,
+    },
+  });
 
-  // 근무정보 상태
-  const [workType, setWorkType] = useState(employee.workType);
-  const [weeklyWorkHours, setWeeklyWorkHours] = useState(
-    String(employee.weeklyWorkHours)
-  );
-  const [workStartTime, setWorkStartTime] = useState(employee.workStartTime);
-  const [workEndTime, setWorkEndTime] = useState(employee.workEndTime);
-  const [breakMinutes, setBreakMinutes] = useState(
-    String(employee.breakMinutes)
-  );
-  const [flexStartTime, setFlexStartTime] = useState(
-    employee.flexStartTime || ""
-  );
-  const [flexEndTime, setFlexEndTime] = useState(employee.flexEndTime || "");
-  const [remoteWorkDays, setRemoteWorkDays] = useState<string[]>(
-    employee.remoteWorkDays ? JSON.parse(employee.remoteWorkDays) : []
+  const { execute: executeInfo, isPending: isPendingInfo } = useAction(
+    updateEmployee,
+    {
+      onSuccess: () => {
+        toast.success("기본정보가 수정되었습니다.");
+        setOpen(false);
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "수정에 실패했습니다.");
+      },
+    }
   );
 
-  // 급여/보험 상태
-  const [salaryType, setSalaryType] = useState(employee.salaryType);
-  const [baseSalary, setBaseSalary] = useState(String(employee.baseSalary));
-  const [bankName, setBankName] = useState(employee.bankName || "");
-  const [bankAccount, setBankAccount] = useState(employee.bankAccount || "");
-  const [nationalPension, setNationalPension] = useState(
-    employee.nationalPension
-  );
-  const [healthInsurance, setHealthInsurance] = useState(
-    employee.healthInsurance
-  );
-  const [employmentInsurance, setEmploymentInsurance] = useState(
-    employee.employmentInsurance
-  );
-  const [industrialAccident, setIndustrialAccident] = useState(
-    employee.industrialAccident
-  );
-  const [dependents, setDependents] = useState(String(employee.dependents));
-
-  const handleSaveInfo = () => {
-    startTransition(async () => {
-      const result = await updateEmployee({
-        id: employee.id,
-        name,
-        departmentId,
-        position: position as (typeof POSITIONS)[number],
-        email: email || "",
-        phone: phone || undefined,
-      });
-      if (result?.serverError) {
-        toast.error(result.serverError);
-        return;
-      }
-      toast.success("기본정보가 수정되었습니다.");
-      setOpen(false);
-    });
+  const onSubmitInfo = (data: InfoFormValues) => {
+    executeInfo({ id: employee.id, ...data });
   };
 
-  const handleSaveWork = () => {
-    startTransition(async () => {
-      const result = await updateEmployeeWork({
-        id: employee.id,
-        workType: workType as keyof typeof WORK_TYPES,
-        weeklyWorkHours: parseInt(weeklyWorkHours),
-        workStartTime,
-        workEndTime,
-        breakMinutes: parseInt(breakMinutes),
-        flexStartTime: flexStartTime || "",
-        flexEndTime: flexEndTime || "",
-        remoteWorkDays: remoteWorkDays as ("MON" | "TUE" | "WED" | "THU" | "FRI")[],
-      });
-      if (result?.serverError) {
-        toast.error(result.serverError);
-        return;
-      }
-      toast.success("근무정보가 수정되었습니다.");
-      setOpen(false);
-    });
+  // ── 근무 폼 ──
+  const workForm = useForm<WorkFormValues>({
+    resolver: zodResolver(workSchema),
+    defaultValues: {
+      workType: employee.workType as "OFFICE" | "FLEXIBLE_HOURS" | "REMOTE" | "HYBRID",
+      weeklyWorkHours: employee.weeklyWorkHours,
+      workStartTime: employee.workStartTime,
+      workEndTime: employee.workEndTime,
+      breakMinutes: employee.breakMinutes,
+      flexStartTime: employee.flexStartTime || "",
+      flexEndTime: employee.flexEndTime || "",
+      remoteWorkDays: employee.remoteWorkDays
+        ? JSON.parse(employee.remoteWorkDays)
+        : [],
+    },
+  });
+
+  const { execute: executeWork, isPending: isPendingWork } = useAction(
+    updateEmployeeWork,
+    {
+      onSuccess: () => {
+        toast.success("근무정보가 수정되었습니다.");
+        setOpen(false);
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "수정에 실패했습니다.");
+      },
+    }
+  );
+
+  const onSubmitWork = (data: WorkFormValues) => {
+    executeWork({ id: employee.id, ...data });
   };
 
-  const handleSaveSalary = () => {
-    startTransition(async () => {
-      const result = await updateEmployeeSalary({
-        id: employee.id,
-        salaryType: salaryType as "MONTHLY" | "HOURLY",
-        baseSalary: parseInt(baseSalary),
-        bankName: bankName || "",
-        bankAccount: bankAccount || "",
-        nationalPension,
-        healthInsurance,
-        employmentInsurance,
-        industrialAccident,
-        dependents: parseInt(dependents),
-      });
-      if (result?.serverError) {
-        toast.error(result.serverError);
-        return;
-      }
-      toast.success("급여/보험 정보가 수정되었습니다.");
-      setOpen(false);
-    });
+  // ── 급여/보험 폼 ──
+  const salaryForm = useForm<SalaryFormValues>({
+    resolver: zodResolver(salarySchema),
+    defaultValues: {
+      salaryType: employee.salaryType as "MONTHLY" | "HOURLY",
+      baseSalary: employee.baseSalary,
+      bankName: employee.bankName || "",
+      bankAccount: employee.bankAccount || "",
+      nationalPension: employee.nationalPension,
+      healthInsurance: employee.healthInsurance,
+      employmentInsurance: employee.employmentInsurance,
+      industrialAccident: employee.industrialAccident,
+      dependents: employee.dependents,
+      childrenUnder20: employee.childrenUnder20,
+    },
+  });
+
+  const { execute: executeSalary, isPending: isPendingSalary } = useAction(
+    updateEmployeeSalary,
+    {
+      onSuccess: () => {
+        toast.success("급여/보험 정보가 수정되었습니다.");
+        setOpen(false);
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "수정에 실패했습니다.");
+      },
+    }
+  );
+
+  const onSubmitSalary = (data: SalaryFormValues) => {
+    executeSalary({ id: employee.id, ...data });
   };
 
+  // ── 최저임금 경고 실시간 표시 ──
+  const salaryTypeWatch = salaryForm.watch("salaryType");
+  const baseSalaryWatch = salaryForm.watch("baseSalary");
+  const minimumWageWarning = validateMinimumWage(
+    baseSalaryWatch || 0,
+    salaryTypeWatch
+  );
+
+  // ── 근무유형에 따른 조건부 필드 표시 ──
+  const workTypeWatch = workForm.watch("workType");
+
+  // ── 재택근무 요일 토글 ──
+  const remoteWorkDaysValue = workForm.watch("remoteWorkDays") || [];
   const toggleRemoteDay = (day: string) => {
-    setRemoteWorkDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
+    type WeekDay = "MON" | "TUE" | "WED" | "THU" | "FRI";
+    const current = remoteWorkDaysValue;
+    const updated = current.includes(day as WeekDay)
+      ? current.filter((d) => d !== day)
+      : [...current, day as WeekDay];
+    workForm.setValue("remoteWorkDays", updated);
   };
 
   return (
@@ -182,255 +258,538 @@ export function EmployeeEditDialog({
             <TabsTrigger value="salary">급여/보험</TabsTrigger>
           </TabsList>
 
-          {/* 기본정보 탭 */}
+          {/* ── 기본정보 탭 ── */}
           <TabsContent value="info" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>이름</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>부서</Label>
-              <Select value={departmentId} onValueChange={setDepartmentId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>직급</Label>
-              <Select value={position} onValueChange={setPosition}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSITIONS.map((pos) => (
-                    <SelectItem key={pos} value={pos}>
-                      {pos}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>이메일</Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>연락처</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-            <DialogFooter>
-              <Button onClick={handleSaveInfo} disabled={isPending}>
-                {isPending ? "저장 중..." : "기본정보 저장"}
-              </Button>
-            </DialogFooter>
+            <Form {...infoForm}>
+              <form
+                onSubmit={infoForm.handleSubmit(onSubmitInfo)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={infoForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>이름</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="departmentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>부서</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>직급</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {POSITIONS.map((pos) => (
+                            <SelectItem key={pos} value={pos}>
+                              {pos}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>이메일</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>연락처</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>주소</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={infoForm.control}
+                  name="childrenUnder20"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>20세 이하 자녀 수</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="20"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter>
+                  <Button type="submit" disabled={isPendingInfo}>
+                    {isPendingInfo ? "저장 중..." : "기본정보 저장"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </TabsContent>
 
-          {/* 근무 탭 */}
+          {/* ── 근무 탭 ── */}
           <TabsContent value="work" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>근무유형</Label>
-              <Select value={workType} onValueChange={setWorkType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(WORK_TYPES).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>출근시간</Label>
-                <Input
-                  type="time"
-                  value={workStartTime}
-                  onChange={(e) => setWorkStartTime(e.target.value)}
+            <Form {...workForm}>
+              <form
+                onSubmit={workForm.handleSubmit(onSubmitWork)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={workForm.control}
+                  name="workType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>근무유형</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(WORK_TYPES).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>퇴근시간</Label>
-                <Input
-                  type="time"
-                  value={workEndTime}
-                  onChange={(e) => setWorkEndTime(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>주간 근로시간</Label>
-                <Input
-                  type="number"
-                  value={weeklyWorkHours}
-                  onChange={(e) => setWeeklyWorkHours(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>휴게시간(분)</Label>
-                <Input
-                  type="number"
-                  value={breakMinutes}
-                  onChange={(e) => setBreakMinutes(e.target.value)}
-                />
-              </div>
-            </div>
-            {(workType === "FLEXIBLE_HOURS" || workType === "HYBRID") && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>시차 출근</Label>
-                  <Input
-                    type="time"
-                    value={flexStartTime}
-                    onChange={(e) => setFlexStartTime(e.target.value)}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={workForm.control}
+                    name="workStartTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>출근시간</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={workForm.control}
+                    name="workEndTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>퇴근시간</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>시차 퇴근</Label>
-                  <Input
-                    type="time"
-                    value={flexEndTime}
-                    onChange={(e) => setFlexEndTime(e.target.value)}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={workForm.control}
+                    name="weeklyWorkHours"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>주간 근로시간</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value) || 40)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={workForm.control}
+                    name="breakMinutes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>휴게시간(분)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value) || 60)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              </div>
-            )}
-            {(workType === "REMOTE" || workType === "HYBRID") && (
-              <div className="space-y-2">
-                <Label>재택근무 요일</Label>
-                <div className="flex gap-2">
-                  {Object.entries(WEEKDAYS).map(([key, label]) => (
-                    <Button
-                      key={key}
-                      type="button"
-                      variant={
-                        remoteWorkDays.includes(key) ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => toggleRemoteDay(key)}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button onClick={handleSaveWork} disabled={isPending}>
-                {isPending ? "저장 중..." : "근무정보 저장"}
-              </Button>
-            </DialogFooter>
+
+                {(workTypeWatch === "FLEXIBLE_HOURS" ||
+                  workTypeWatch === "HYBRID") && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={workForm.control}
+                      name="flexStartTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>시차 출근</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={workForm.control}
+                      name="flexEndTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>시차 퇴근</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {(workTypeWatch === "REMOTE" || workTypeWatch === "HYBRID") && (
+                  <FormItem>
+                    <FormLabel>재택근무 요일</FormLabel>
+                    <div className="flex gap-2">
+                      {Object.entries(WEEKDAYS).map(([key, label]) => {
+                        type WeekDay = "MON" | "TUE" | "WED" | "THU" | "FRI";
+                        return (
+                          <Button
+                            key={key}
+                            type="button"
+                            variant={
+                              remoteWorkDaysValue.includes(key as WeekDay)
+                                ? "default"
+                                : "outline"
+                            }
+                            size="sm"
+                            onClick={() => toggleRemoteDay(key)}
+                          >
+                            {label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </FormItem>
+                )}
+
+                <DialogFooter>
+                  <Button type="submit" disabled={isPendingWork}>
+                    {isPendingWork ? "저장 중..." : "근무정보 저장"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </TabsContent>
 
-          {/* 급여/보험 탭 */}
+          {/* ── 급여/보험 탭 ── */}
           <TabsContent value="salary" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>급여유형</Label>
-              <Select value={salaryType} onValueChange={setSalaryType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MONTHLY">월급제</SelectItem>
-                  <SelectItem value="HOURLY">시급제</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>기본급 (원)</Label>
-              <Input
-                type="number"
-                value={baseSalary}
-                onChange={(e) => setBaseSalary(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>은행</Label>
-                <Input
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="국민은행"
+            <Form {...salaryForm}>
+              <form
+                onSubmit={salaryForm.handleSubmit(onSubmitSalary)}
+                className="space-y-4"
+              >
+                {!minimumWageWarning.isValid && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {minimumWageWarning.message}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <FormField
+                  control={salaryForm.control}
+                  name="salaryType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>급여유형</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="MONTHLY">월급제</SelectItem>
+                          <SelectItem value="HOURLY">시급제</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>계좌번호</Label>
-                <Input
-                  value={bankAccount}
-                  onChange={(e) => setBankAccount(e.target.value)}
-                  placeholder="123-456-789012"
+
+                <FormField
+                  control={salaryForm.control}
+                  name="baseSalary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>기본급 (원)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>부양가족 수</Label>
-              <Input
-                type="number"
-                min="0"
-                value={dependents}
-                onChange={(e) => setDependents(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>4대보험 가입</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  {
-                    label: "국민연금",
-                    checked: nationalPension,
-                    onChange: setNationalPension,
-                  },
-                  {
-                    label: "건강보험",
-                    checked: healthInsurance,
-                    onChange: setHealthInsurance,
-                  },
-                  {
-                    label: "고용보험",
-                    checked: employmentInsurance,
-                    onChange: setEmploymentInsurance,
-                  },
-                  {
-                    label: "산재보험",
-                    checked: industrialAccident,
-                    onChange: setIndustrialAccident,
-                  },
-                ].map((item) => (
-                  <label
-                    key={item.label}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={item.checked}
-                      onChange={(e) => item.onChange(e.target.checked)}
-                      className="rounded"
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={salaryForm.control}
+                    name="bankName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>은행</FormLabel>
+                        <FormControl>
+                          <Input placeholder="국민은행" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={salaryForm.control}
+                    name="bankAccount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>계좌번호</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123-456-789012" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={salaryForm.control}
+                  name="dependents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>부양가족 수</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 1)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={salaryForm.control}
+                  name="childrenUnder20"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>20세 이하 자녀 수</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="20"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormItem>
+                  <FormLabel>4대보험 가입</FormLabel>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <FormField
+                      control={salaryForm.control}
+                      name="nationalPension"
+                      render={({ field }) => (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <label className="text-sm cursor-pointer">
+                            국민연금
+                          </label>
+                        </div>
+                      )}
                     />
-                    {item.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleSaveSalary} disabled={isPending}>
-                {isPending ? "저장 중..." : "급여/보험 저장"}
-              </Button>
-            </DialogFooter>
+                    <FormField
+                      control={salaryForm.control}
+                      name="healthInsurance"
+                      render={({ field }) => (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <label className="text-sm cursor-pointer">
+                            건강보험
+                          </label>
+                        </div>
+                      )}
+                    />
+                    <FormField
+                      control={salaryForm.control}
+                      name="employmentInsurance"
+                      render={({ field }) => (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <label className="text-sm cursor-pointer">
+                            고용보험
+                          </label>
+                        </div>
+                      )}
+                    />
+                    <FormField
+                      control={salaryForm.control}
+                      name="industrialAccident"
+                      render={({ field }) => (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <label className="text-sm cursor-pointer">
+                            산재보험
+                          </label>
+                        </div>
+                      )}
+                    />
+                  </div>
+                </FormItem>
+
+                <DialogFooter>
+                  <Button type="submit" disabled={isPendingSalary}>
+                    {isPendingSalary ? "저장 중..." : "급여/보험 저장"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </TabsContent>
         </Tabs>
       </DialogContent>

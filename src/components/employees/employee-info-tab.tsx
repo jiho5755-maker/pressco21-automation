@@ -46,6 +46,15 @@ export function EmployeeInfoTab({ employee }: EmployeeInfoTabProps) {
           <InfoRow label="사번" value={employee.employeeNo} />
           <InfoRow label="이메일" value={employee.email} />
           <InfoRow label="연락처" value={employee.phone} />
+          <InfoRow label="주소" value={employee.address} />
+          <InfoRow
+            label="20세 이하 자녀"
+            value={
+              employee.childrenUnder20 > 0
+                ? `${employee.childrenUnder20}명`
+                : "-"
+            }
+          />
           <InfoRow label="부서" value={employee.department.name} />
           <InfoRow label="직급" value={employee.position} />
         </CardContent>

@@ -96,6 +96,10 @@ model Employee {
   email      String?
   phone      String?
 
+  // ── 인적사항 추가 ──
+  address         String? // 주소
+  childrenUnder20 Int     @default(0) // 20세 이하 자녀 수 (자녀세액공제 계산용)
+
   // ── 소속 ──
   departmentId String
   department   Department @relation(fields: [departmentId], references: [id])

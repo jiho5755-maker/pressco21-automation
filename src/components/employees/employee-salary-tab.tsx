@@ -82,6 +82,21 @@ export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
           <InfoRow label="은행" value={employee.bankName} />
           <InfoRow label="계좌번호" value={employee.bankAccount} />
           <InfoRow label="부양가족 수" value={`${employee.dependents}명`} />
+          <InfoRow
+            label="20세 이하 자녀"
+            value={
+              employee.childrenUnder20 > 0 ? (
+                <span className="flex items-center gap-2">
+                  {employee.childrenUnder20}명
+                  <Badge variant="outline" className="text-[10px]">
+                    자녀세액공제 대상
+                  </Badge>
+                </span>
+              ) : (
+                "-"
+              )
+            }
+          />
         </CardContent>
       </Card>
 
