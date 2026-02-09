@@ -1,0 +1,257 @@
+// 소기업 경영 자동화 시스템 — DB 스키마
+// SQLite 기반, enum 미지원 → String + 앱레벨 검증
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Auth.js 호환 테이블 + RBAC
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String // bcryptjs 해시
+  role          String    @default("admin") // "admin"|"manager"|"viewer"
+
+  accounts Account[]
+  sessions Session[]
+
+  submittedExpenses Expense[] @relation("ExpenseSubmitter")
+  approvedExpenses  Expense[] @relation("ExpenseApprover")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// 부서
+// ─────────────────────────────────────────────
+
+model Department {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  employees Employee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 직원 — 인사노무 + 유연근무 + 대체인력 통합
+// ─────────────────────────────────────────────
+
+model Employee {
+  id         String  @id @default(cuid())
+  employeeNo String  @unique // 사번 (EMP001)
+  name       String
+  email      String?
+  phone      String?
+
+  // ── 소속 ──
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  position     String // "사원"|"주임"|"대리"|"과장"|"차장"|"부장"|"이사"
+
+  // ── 계약 정보 ──
+  joinDate        DateTime // 입사일 (연차 기산점)
+  contractType    String   @default("REGULAR") // "REGULAR"|"CONTRACT"|"PARTTIME"|"REPLACEMENT"
+  contractEndDate DateTime? // 계약직/대체인력 종료일
+  probationEnd    DateTime? // 수습 종료일
+
+  // ── 대체인력 관계 (self-reference) ──
+  replacementForId String?
+  replacementFor   Employee?  @relation("ReplacementRelation", fields: [replacementForId], references: [id])
+  replacements     Employee[] @relation("ReplacementRelation")
+  replacementReason String? // "MATERNITY"|"PARENTAL"|"SICK"
+
+  // ── 근무 조건 (기본) ──
+  weeklyWorkHours Int    @default(40) // 소정근로시간(주당)
+  workStartTime   String @default("09:00") // 기본 출근시간 HH:mm
+  workEndTime     String @default("18:00") // 기본 퇴근시간 HH:mm
+  breakMinutes    Int    @default(60) // 휴게시간(분)
+
+  // ── 유연근무 설정 ──
+  workType      String  @default("OFFICE") // "OFFICE"|"FLEXIBLE_HOURS"|"REMOTE"|"HYBRID"
+  flexStartTime String? // 시차출퇴근 출근시간
+  flexEndTime   String? // 시차출퇴근 퇴근시간
+  remoteWorkDays String? // 재택근무 요일 JSON: "[\"MON\",\"WED\"]"
+
+  // ── 급여 정보 ──
+  salaryType  String @default("MONTHLY") // "MONTHLY"|"HOURLY"
+  baseSalary  Int    @default(0) // 기본급(원)
+  bankName    String?
+  bankAccount String?
+
+  // ── 4대보험 ──
+  nationalPension     Boolean @default(true)
+  healthInsurance     Boolean @default(true)
+  employmentInsurance Boolean @default(true)
+  industrialAccident  Boolean @default(true)
+  dependents          Int     @default(1) // 부양가족 수
+
+  // ── 상태 관리 ──
+  status         String    @default("ACTIVE") // "ACTIVE"|"ON_LEAVE"|"RESIGNED"
+  leaveType      String? // "MATERNITY"|"PARENTAL"|"SICK"|"PERSONAL"|"SPOUSE_MATERNITY"
+  leaveStartDate DateTime?
+  leaveEndDate   DateTime?
+  resignDate     DateTime?
+  resignReason   String?
+
+  // ── 관계 ──
+  expenses          Expense[]
+  attendanceRecords AttendanceRecord[]
+  leaveRecords      LeaveRecord[]
+  workSchedules     WorkSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 요일별 근무 스케줄 (시차출퇴근 핵심)
+// ─────────────────────────────────────────────
+
+model WorkSchedule {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int     // 0(일)~6(토)
+  startTime String  // HH:mm
+  endTime   String  // HH:mm
+  isRemote  Boolean @default(false) // 해당 요일 재택 여부
+  isWorkDay Boolean @default(true) // 근무일 여부
+
+  effectiveFrom DateTime // 적용 시작일
+  effectiveTo   DateTime? // 적용 종료일 (null=현재 유효)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, dayOfWeek, effectiveFrom])
+}
+
+// ─────────────────────────────────────────────
+// 출퇴근 기록 (정부 지원 핵심 증빙)
+// ─────────────────────────────────────────────
+
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  date        DateTime // 근무일
+  clockIn     DateTime? // 실제 출근 시각
+  clockOut    DateTime? // 실제 퇴근 시각
+  workType    String    @default("OFFICE") // "OFFICE"|"REMOTE"|"FLEXIBLE_HOURS"|"HOLIDAY"|"LEAVE"
+  workMinutes Int? // 실근로시간(분)
+  overtime    Int       @default(0) // 연장근로(분)
+  nightWork   Int       @default(0) // 야간근로(분) 22~06시
+  note        String?
+
+  isConfirmed Boolean @default(false) // 관리자 확인 여부
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, date])
+}
+
+// ─────────────────────────────────────────────
+// 휴가/휴직 이력 (출산+육아 추적)
+// ─────────────────────────────────────────────
+
+model LeaveRecord {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type      String // "ANNUAL"|"MATERNITY"|"PARENTAL"|"SPOUSE_MATERNITY"|"SICK"|"PERSONAL"|"COMPENSATORY"
+  startDate DateTime
+  endDate   DateTime
+  days      Float // 사용일수 (0.5 = 반차)
+  status    String    @default("APPROVED") // "PENDING"|"APPROVED"|"REJECTED"|"CANCELLED"
+  reason    String?
+
+  childBirthDate DateTime? // 자녀 출생일 (출산휴가/육아휴직 기간 자동계산용)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 경비
+// ─────────────────────────────────────────────
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Int
+  category    String
+  date        DateTime
+  description String?
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  submitterId String
+  submitter   User   @relation("ExpenseSubmitter", fields: [submitterId], references: [id])
+
+  status       String    @default("PENDING") // "PENDING"|"APPROVED"|"REJECTED"
+  approverId   String?
+  approver     User?     @relation("ExpenseApprover", fields: [approverId], references: [id])
+  approvedAt   DateTime?
+  rejectReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
