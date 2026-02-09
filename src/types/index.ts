@@ -7,3 +7,9 @@ export interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   description?: string;
 }
+
+/** 네비게이션 그룹 타입 */
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}

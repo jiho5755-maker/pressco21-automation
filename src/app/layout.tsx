@@ -1,6 +1,7 @@
-// 루트 레이아웃 — 폰트, 메타데이터
+// 루트 레이아웃 — 폰트, 메타데이터, 토스트
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Toaster richColors />
       </body>
     </html>
   );

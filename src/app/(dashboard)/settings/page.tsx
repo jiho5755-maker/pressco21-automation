@@ -1,4 +1,4 @@
-// 설정 페이지 — 프로필 확인 및 시스템 정보
+// 설정 페이지 — 세션 기반 역할 표시
 import { auth } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -10,8 +10,15 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+const roleLabels: Record<string, string> = {
+  admin: "관리자",
+  manager: "매니저",
+  viewer: "뷰어",
+};
+
 export default async function SettingsPage() {
   const session = await auth();
+  const role = session?.user?.role || "viewer";
 
   return (
     <>
@@ -44,7 +51,9 @@ export default async function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">역할</span>
-              <Badge variant="secondary">관리자</Badge>
+              <Badge variant="secondary">
+                {roleLabels[role] || role}
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -54,7 +63,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>시스템 정보</CardTitle>
             <CardDescription>
-              스타터킷 버전 및 환경 정보입니다.
+              시스템 버전 및 환경 정보입니다.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
