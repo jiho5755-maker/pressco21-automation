@@ -83,21 +83,42 @@ export const LABOR_STANDARDS_2026 = {
   maxOvertimeHours: 12,
 } as const;
 
+// ── 2026년 비과세 한도 ──
+export const TAX_FREE_LIMITS_2026 = {
+  meal: 200000, // 식대 비과세 한도 (월 20만원)
+  transport: 200000, // 교통비 비과세 한도 (월 20만원)
+} as const;
+
+// ── 고정OT 권장 상한 (주 52시간 법정 한도 기준) ──
+export const FIXED_OT_LIMITS_2026 = {
+  maxMonthlyOTHours: 52, // 주 12시간 연장 × 4.345주 = 약 52시간
+  maxWeeklyOTHours: 12, // 주 최대 연장근로 12시간 (주52시간제)
+} as const;
+
+export type TaxFreeLimits = typeof TAX_FREE_LIMITS_2026;
+export type FixedOTLimits = typeof FIXED_OT_LIMITS_2026;
+
 // ── 2026년 4대보험 요율 ──
 export const INSURANCE_RATES_2026 = {
-  nationalPension: {
-    employee: 0.0475,
-    employer: 0.0475,
-    upperLimit: 6370000,
-    lowerLimit: 400000,
+  rates: {
+    nationalPension: 0.0475, // 근로자 부담 4.75%
+    healthInsurance: 0.03595, // 근로자 부담 3.595%
+    longTermCare: 0.1314, // 건강보험료의 13.14%
+    employmentInsurance: 0.009, // 근로자 부담 0.9%
   },
-  healthInsurance: {
-    employee: 0.03595,
-    employer: 0.03595,
-    upperLimit: 12700000,
+  caps: {
+    nationalPension: 6370000, // 상한 637만원
+    healthInsurance: 12700000, // 상한 1,270만원
   },
-  longTermCare: { rate: 0.1314 },
-  employmentInsurance: { employee: 0.009, employer: 0.0105 },
+  floors: {
+    nationalPension: 400000, // 하한 40만원
+  },
+  employer: {
+    nationalPension: 0.0475, // 사업주 부담 4.75%
+    healthInsurance: 0.03595, // 사업주 부담 3.595%
+    employmentInsurance: 0.0105, // 사업주 부담 1.05%
+    industrialAccident: 0.007, // 산재보험 0.7% (유통업 기준)
+  },
 } as const;
 
 // ── 출산/육아 법정 기준 (2026) ──

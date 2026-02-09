@@ -1,4 +1,6 @@
-// 직원 급여/보험 탭 — 급여정보 + 4대보험 + 월 예상 공제액
+// 직원 급여/보험 탭 — Phase 1-B: 수당 분리 및 비과세 처리
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -7,78 +9,218 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  calculateHourlyRate,
-  calculateMonthlyInsurance,
-  formatCurrency,
-} from "@/lib/salary-calculator";
-import { INSURANCE_RATES_2026, LABOR_STANDARDS_2026 } from "@/lib/constants";
+import { calculateSalary } from "@/lib/salary-calculator";
+import { INSURANCE_RATES_2026 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { Employee } from "@prisma/client";
 
 interface EmployeeSalaryTabProps {
   employee: Employee;
 }
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoRow({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex justify-between py-2 border-b last:border-b-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value || "-"}</span>
+    <div className={cn("flex justify-between items-center py-2", className)}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{value || "-"}</span>
     </div>
   );
 }
 
 export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
-  const hourlyRate = calculateHourlyRate(
-    employee.baseSalary,
-    employee.salaryType
+  // 급여 계산
+  const salaryResult = calculateSalary(
+    {
+      baseSalary: employee.baseSalary,
+      mealAllowance: employee.mealAllowance || 0,
+      transportAllowance: employee.transportAllowance || 0,
+      positionAllowance: employee.positionAllowance || 0,
+      taxFreeMeal: employee.taxFreeMeal ?? true,
+      taxFreeTransport: employee.taxFreeTransport ?? true,
+    },
+    {
+      nationalPension: employee.nationalPension,
+      healthInsurance: employee.healthInsurance,
+      employmentInsurance: employee.employmentInsurance,
+      dependents: employee.dependents,
+      childrenUnder20: employee.childrenUnder20,
+    }
   );
-  const insurance = calculateMonthlyInsurance(employee.baseSalary, {
-    nationalPension: employee.nationalPension,
-    healthInsurance: employee.healthInsurance,
-    employmentInsurance: employee.employmentInsurance,
-    industrialAccident: employee.industrialAccident,
-  });
-
-  const isMinimumWage = hourlyRate < LABOR_STANDARDS_2026.minimumWage.hourly;
 
   return (
-    <div className="space-y-4">
-      {/* 급여 정보 */}
+    <div className="space-y-6">
+      {/* 급여 구성 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">급여 정보</CardTitle>
+          <CardTitle>급여 구성</CardTitle>
+          <CardDescription>
+            {employee.salaryType === "MONTHLY" ? "월급제" : "시급제"}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <InfoRow
-            label="급여유형"
-            value={employee.salaryType === "MONTHLY" ? "월급제" : "시급제"}
-          />
+        <CardContent className="space-y-3">
           <InfoRow
             label="기본급"
-            value={formatCurrency(employee.baseSalary)}
+            value={`${employee.baseSalary.toLocaleString()}원`}
           />
           <InfoRow
-            label="통상시급"
+            label="식대"
             value={
               <span className="flex items-center gap-2">
-                {formatCurrency(hourlyRate)}
-                {isMinimumWage && (
-                  <Badge variant="destructive" className="text-[10px]">
-                    최저임금 미달
+                {(employee.mealAllowance || 0).toLocaleString()}원
+                {employee.taxFreeMeal && (employee.mealAllowance || 0) > 0 && (
+                  <Badge variant="outline" className="text-[10px]">
+                    비과세
                   </Badge>
                 )}
               </span>
             }
           />
+          <InfoRow
+            label="교통비"
+            value={
+              <span className="flex items-center gap-2">
+                {(employee.transportAllowance || 0).toLocaleString()}원
+                {employee.taxFreeTransport &&
+                  (employee.transportAllowance || 0) > 0 && (
+                    <Badge variant="outline" className="text-[10px]">
+                      비과세
+                    </Badge>
+                  )}
+              </span>
+            }
+          />
+          <InfoRow
+            label="직책수당"
+            value={`${(employee.positionAllowance || 0).toLocaleString()}원`}
+          />
+          <div className="border-t pt-3 mt-3">
+            <InfoRow
+              label="총 급여"
+              value={
+                <span className="text-lg font-bold">
+                  {salaryResult.totalGross.toLocaleString()}원
+                </span>
+              }
+            />
+            <InfoRow
+              label="과세 대상"
+              value={
+                <span className="text-sm text-muted-foreground">
+                  {salaryResult.totalTaxable.toLocaleString()}원
+                </span>
+              }
+              className="text-sm"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 공제 내역 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>공제 내역</CardTitle>
+          <CardDescription>2026년 기준 자동 계산</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <InfoRow
+            label="국민연금"
+            value={
+              <span className="flex items-center gap-2">
+                {salaryResult.nationalPension.toLocaleString()}원
+                <span className="text-xs text-muted-foreground">
+                  ({(INSURANCE_RATES_2026.rates.nationalPension * 100).toFixed(2)}%)
+                </span>
+              </span>
+            }
+          />
+          <InfoRow
+            label="건강보험"
+            value={
+              <span className="flex items-center gap-2">
+                {salaryResult.healthInsurance.toLocaleString()}원
+                <span className="text-xs text-muted-foreground">
+                  ({(INSURANCE_RATES_2026.rates.healthInsurance * 100).toFixed(3)}%)
+                </span>
+              </span>
+            }
+          />
+          <InfoRow
+            label="장기요양"
+            value={
+              <span className="flex items-center gap-2">
+                {salaryResult.longTermCare.toLocaleString()}원
+                <span className="text-xs text-muted-foreground">
+                  ({(INSURANCE_RATES_2026.rates.longTermCare * 100).toFixed(2)}%)
+                </span>
+              </span>
+            }
+          />
+          <InfoRow
+            label="고용보험"
+            value={
+              <span className="flex items-center gap-2">
+                {salaryResult.employmentInsurance.toLocaleString()}원
+                <span className="text-xs text-muted-foreground">
+                  ({(INSURANCE_RATES_2026.rates.employmentInsurance * 100).toFixed(1)}%)
+                </span>
+              </span>
+            }
+          />
+          <InfoRow
+            label="소득세"
+            value={`${salaryResult.incomeTax.toLocaleString()}원`}
+          />
+          <InfoRow
+            label="지방소득세"
+            value={`${salaryResult.localIncomeTax.toLocaleString()}원`}
+          />
+          <div className="border-t pt-3 mt-3">
+            <InfoRow
+              label="총 공제액"
+              value={
+                <span className="text-lg font-bold">
+                  {(
+                    salaryResult.totalInsurance +
+                    salaryResult.incomeTax +
+                    salaryResult.localIncomeTax
+                  ).toLocaleString()}
+                  원
+                </span>
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 실수령액 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>실수령액</CardTitle>
+          <CardDescription>
+            총 급여 - 공제액 (소득세는 간이세액표 간단 버전)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-primary">
+            {salaryResult.netSalary.toLocaleString()}원
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 기타 정보 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>기타 정보</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <InfoRow label="은행" value={employee.bankName} />
           <InfoRow label="계좌번호" value={employee.bankAccount} />
           <InfoRow label="부양가족 수" value={`${employee.dependents}명`} />
@@ -99,169 +241,6 @@ export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
           />
         </CardContent>
       </Card>
-
-      {/* 4대보험 가입 현황 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">4대보험 가입 현황</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InfoRow
-            label="국민연금"
-            value={
-              <Badge
-                variant="outline"
-                className={
-                  employee.nationalPension
-                    ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
-                    : "border-gray-200 bg-gray-50 text-gray-500"
-                }
-              >
-                {employee.nationalPension ? "가입" : "미가입"}
-              </Badge>
-            }
-          />
-          <InfoRow
-            label="건강보험"
-            value={
-              <Badge
-                variant="outline"
-                className={
-                  employee.healthInsurance
-                    ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
-                    : "border-gray-200 bg-gray-50 text-gray-500"
-                }
-              >
-                {employee.healthInsurance ? "가입" : "미가입"}
-              </Badge>
-            }
-          />
-          <InfoRow
-            label="고용보험"
-            value={
-              <Badge
-                variant="outline"
-                className={
-                  employee.employmentInsurance
-                    ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
-                    : "border-gray-200 bg-gray-50 text-gray-500"
-                }
-              >
-                {employee.employmentInsurance ? "가입" : "미가입"}
-              </Badge>
-            }
-          />
-          <InfoRow
-            label="산재보험"
-            value={
-              <Badge
-                variant="outline"
-                className={
-                  employee.industrialAccident
-                    ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
-                    : "border-gray-200 bg-gray-50 text-gray-500"
-                }
-              >
-                {employee.industrialAccident ? "가입" : "미가입"}
-              </Badge>
-            }
-          />
-        </CardContent>
-      </Card>
-
-      {/* 월 예상 공제액 */}
-      {employee.baseSalary > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">월 예상 공제액 (2026년 기준)</CardTitle>
-            <CardDescription>
-              기본급 {formatCurrency(employee.baseSalary)} 기준 자동 계산
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>항목</TableHead>
-                  <TableHead className="text-right">요율</TableHead>
-                  <TableHead className="text-right">근로자 부담</TableHead>
-                  <TableHead className="text-right">사업주 부담</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>국민연금</TableCell>
-                  <TableCell className="text-right">
-                    {(INSURANCE_RATES_2026.nationalPension.employee * 100).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.nationalPension)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employer.nationalPension)}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>건강보험</TableCell>
-                  <TableCell className="text-right">
-                    {(INSURANCE_RATES_2026.healthInsurance.employee * 100).toFixed(3)}%
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.healthInsurance)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employer.healthInsurance)}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>장기요양보험</TableCell>
-                  <TableCell className="text-right">
-                    {(INSURANCE_RATES_2026.longTermCare.rate * 100).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.longTermCare)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employer.longTermCare)}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>고용보험</TableCell>
-                  <TableCell className="text-right">
-                    {(INSURANCE_RATES_2026.employmentInsurance.employee * 100).toFixed(1)}%
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employmentInsurance)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employer.employmentInsurance)}
-                  </TableCell>
-                </TableRow>
-                {employee.industrialAccident && (
-                  <TableRow>
-                    <TableCell>산재보험</TableCell>
-                    <TableCell className="text-right">0.7%</TableCell>
-                    <TableCell className="text-right">-</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(insurance.employer.industrialAccident)}
-                    </TableCell>
-                  </TableRow>
-                )}
-                <TableRow className="font-bold border-t-2">
-                  <TableCell>합계</TableCell>
-                  <TableCell className="text-right" />
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.totalEmployee)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(insurance.employer.total)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

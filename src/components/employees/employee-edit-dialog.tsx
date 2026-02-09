@@ -24,6 +24,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -82,9 +83,22 @@ const workSchema = z.object({
 const salarySchema = z
   .object({
     salaryType: z.enum(["MONTHLY", "HOURLY"]),
+
+    // 급여 구성
     baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
+    mealAllowance: z.number().min(0).default(0),
+    transportAllowance: z.number().min(0).default(0),
+    positionAllowance: z.number().min(0).default(0),
+
+    // 비과세 여부
+    taxFreeMeal: z.boolean().default(true),
+    taxFreeTransport: z.boolean().default(true),
+
+    // 은행 정보
     bankName: z.string().optional().or(z.literal("")),
     bankAccount: z.string().optional().or(z.literal("")),
+
+    // 4대보험
     nationalPension: z.boolean(),
     healthInsurance: z.boolean(),
     employmentInsurance: z.boolean(),
@@ -93,12 +107,36 @@ const salarySchema = z
     childrenUnder20: z.number().int().min(0).max(20),
   })
   .superRefine((data, ctx) => {
-    const validation = validateMinimumWage(data.baseSalary, data.salaryType);
+    // 최저임금 검증 (모든 수당 포함)
+    const validation = validateMinimumWage(
+      data.baseSalary,
+      data.mealAllowance,
+      data.transportAllowance,
+      data.positionAllowance,
+      data.salaryType
+    );
     if (!validation.isValid) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: validation.message || "최저임금 미달",
         path: ["baseSalary"],
+      });
+    }
+
+    // 비과세 한도 경고
+    if (data.taxFreeMeal && data.mealAllowance > 200000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "식대 비과세 한도(20만원)를 초과했습니다. 초과분은 과세됩니다.",
+        path: ["mealAllowance"],
+      });
+    }
+
+    if (data.taxFreeTransport && data.transportAllowance > 200000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "교통비 비과세 한도(20만원)를 초과했습니다. 초과분은 과세됩니다.",
+        path: ["transportAllowance"],
       });
     }
   });
@@ -185,6 +223,11 @@ export function EmployeeEditDialog({
     defaultValues: {
       salaryType: employee.salaryType as "MONTHLY" | "HOURLY",
       baseSalary: employee.baseSalary,
+      mealAllowance: employee.mealAllowance || 0,
+      transportAllowance: employee.transportAllowance || 0,
+      positionAllowance: employee.positionAllowance || 0,
+      taxFreeMeal: employee.taxFreeMeal ?? true,
+      taxFreeTransport: employee.taxFreeTransport ?? true,
       bankName: employee.bankName || "",
       bankAccount: employee.bankAccount || "",
       nationalPension: employee.nationalPension,
@@ -216,10 +259,23 @@ export function EmployeeEditDialog({
   // ── 최저임금 경고 실시간 표시 ──
   const salaryTypeWatch = salaryForm.watch("salaryType");
   const baseSalaryWatch = salaryForm.watch("baseSalary");
+  const mealAllowanceWatch = salaryForm.watch("mealAllowance");
+  const transportAllowanceWatch = salaryForm.watch("transportAllowance");
+  const positionAllowanceWatch = salaryForm.watch("positionAllowance");
   const minimumWageWarning = validateMinimumWage(
     baseSalaryWatch || 0,
+    mealAllowanceWatch || 0,
+    transportAllowanceWatch || 0,
+    positionAllowanceWatch || 0,
     salaryTypeWatch
   );
+
+  // ── 총 급여 계산 ──
+  const totalGross =
+    (baseSalaryWatch || 0) +
+    (mealAllowanceWatch || 0) +
+    (transportAllowanceWatch || 0) +
+    (positionAllowanceWatch || 0);
 
   // ── 근무유형에 따른 조건부 필드 표시 ──
   const workTypeWatch = workForm.watch("workType");
@@ -629,7 +685,7 @@ export function EmployeeEditDialog({
                   name="baseSalary"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>기본급 (원)</FormLabel>
+                      <FormLabel>기본급 (원) *</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -639,10 +695,120 @@ export function EmployeeEditDialog({
                           }
                         />
                       </FormControl>
+                      <FormDescription>
+                        세금/보험료 계산 기준이 되는 기본급여
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={salaryForm.control}
+                  name="mealAllowance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>식대 (원)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <div className="flex items-center gap-2 mt-2">
+                        <FormField
+                          control={salaryForm.control}
+                          name="taxFreeMeal"
+                          render={({ field }) => (
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                              <label className="text-sm cursor-pointer">
+                                비과세 (20만원까지)
+                              </label>
+                            </div>
+                          )}
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={salaryForm.control}
+                  name="transportAllowance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>교통비 (원)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <div className="flex items-center gap-2 mt-2">
+                        <FormField
+                          control={salaryForm.control}
+                          name="taxFreeTransport"
+                          render={({ field }) => (
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                              <label className="text-sm cursor-pointer">
+                                비과세 (20만원까지)
+                              </label>
+                            </div>
+                          )}
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={salaryForm.control}
+                  name="positionAllowance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>직책수당 (원)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value) || 0)
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        과세 대상 (직책에 따른 추가 수당)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 총 급여 미리보기 */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">총 급여</span>
+                    <span className="text-2xl font-bold">
+                      {totalGross.toLocaleString()}원
+                    </span>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField

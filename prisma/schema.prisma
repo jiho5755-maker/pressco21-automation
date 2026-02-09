@@ -131,7 +131,26 @@ model Employee {
 
   // ── 급여 정보 ──
   salaryType  String @default("MONTHLY") // "MONTHLY"|"HOURLY"
-  baseSalary  Int    @default(0) // 기본급(원)
+  baseSalary  Int    @default(0) // 기본급(원) — 의미 변경: 총급여 → 기본급
+
+  // ── 수당 필드 ──
+  mealAllowance      Int     @default(0) // 식대(원)
+  transportAllowance Int     @default(0) // 교통비(원)
+  positionAllowance  Int     @default(0) // 직책수당(원)
+
+  // ── 비과세 여부 ──
+  taxFreeMeal        Boolean @default(true) // 식대 비과세 여부
+  taxFreeTransport   Boolean @default(true) // 교통비 비과세 여부
+
+  // ── 포괄임금(고정OT) 설정 ──
+  useFixedOT            Boolean @default(false) // 고정OT 사용 여부
+  fixedOTHours          Int?    // 월 고정 연장근로 시간 (예: 20시간)
+  fixedOTAmount         Int?    // 월 고정 연장수당 금액 (원)
+  fixedNightWorkHours   Int?    @default(0) // 월 고정 야간근로 시간
+  fixedNightWorkAmount  Int?    @default(0) // 월 고정 야간수당 금액
+  fixedHolidayWorkHours Int?    @default(0) // 월 고정 휴일근로 시간
+  fixedHolidayWorkAmount Int?   @default(0) // 월 고정 휴일수당 금액
+
   bankName    String?
   bankAccount String?
 

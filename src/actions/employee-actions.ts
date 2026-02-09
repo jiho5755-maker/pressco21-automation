@@ -138,9 +138,22 @@ const updateEmployeeSalarySchema = z
   .object({
     id: z.string(),
     salaryType: z.enum(["MONTHLY", "HOURLY"]),
+
+    // 급여 구성
     baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
+    mealAllowance: z.number().min(0).default(0),
+    transportAllowance: z.number().min(0).default(0),
+    positionAllowance: z.number().min(0).default(0),
+
+    // 비과세 여부
+    taxFreeMeal: z.boolean().default(true),
+    taxFreeTransport: z.boolean().default(true),
+
+    // 은행 정보
     bankName: z.string().optional().or(z.literal("")),
     bankAccount: z.string().optional().or(z.literal("")),
+
+    // 4대보험
     nationalPension: z.boolean(),
     healthInsurance: z.boolean(),
     employmentInsurance: z.boolean(),
@@ -149,12 +162,37 @@ const updateEmployeeSalarySchema = z
     childrenUnder20: z.coerce.number().int().min(0).max(20).default(0),
   })
   .superRefine((data, ctx) => {
-    const validation = validateMinimumWage(data.baseSalary, data.salaryType);
+    // 최저임금 검증 (모든 수당 포함)
+    const validation = validateMinimumWage(
+      data.baseSalary,
+      data.mealAllowance,
+      data.transportAllowance,
+      data.positionAllowance,
+      data.salaryType
+    );
+
     if (!validation.isValid) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: validation.message || "최저임금 미달",
         path: ["baseSalary"],
+      });
+    }
+
+    // 비과세 한도 경고 (식대 20만원, 교통비 20만원 초과 시)
+    if (data.taxFreeMeal && data.mealAllowance > 200000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "식대 비과세 한도(20만원)를 초과했습니다. 초과분은 과세됩니다.",
+        path: ["mealAllowance"],
+      });
+    }
+
+    if (data.taxFreeTransport && data.transportAllowance > 200000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "교통비 비과세 한도(20만원)를 초과했습니다. 초과분은 과세됩니다.",
+        path: ["transportAllowance"],
       });
     }
   });
