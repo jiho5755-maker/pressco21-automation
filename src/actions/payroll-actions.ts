@@ -1,0 +1,148 @@
+"use server";
+
+import { z } from "zod/v4"; // ⚠️ v4 임포트 필수 (v3 경로 사용 금지)
+import { revalidatePath } from "next/cache";
+import { authActionClient, ActionError } from "@/lib/safe-action";
+import { prisma } from "@/lib/prisma";
+import { calculateMonthlyPayroll } from "@/lib/payroll-calculator";
+
+// ── Zod 스키마 ──
+
+const generatePayrollSchema = z.object({
+  employeeId: z.string().min(1, "직원을 선택해주세요"),
+  year: z.number().int().min(2020).max(2100),
+  month: z.number().int().min(1).max(12),
+});
+
+const confirmPayrollSchema = z.object({
+  ids: z.array(z.string()).min(1, "확정할 급여를 선택해주세요"),
+});
+
+const deletePayrollSchema = z.object({
+  id: z.string().min(1),
+});
+
+// ── Server Actions ──
+
+/**
+ * 월별 급여 생성 (자동 계산)
+ */
+export const generatePayrollRecord = authActionClient
+  .inputSchema(generatePayrollSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { employeeId, year, month } = parsedInput;
+
+    // 1. 중복 체크
+    const existing = await prisma.payrollRecord.findUnique({
+      where: {
+        employeeId_year_month: { employeeId, year, month },
+      },
+    });
+
+    if (existing) {
+      throw new ActionError("해당 월의 급여 기록이 이미 존재합니다.");
+    }
+
+    // 2. 급여 계산
+    const payroll = await calculateMonthlyPayroll(employeeId, year, month);
+
+    // 3. DB 저장
+    const record = await prisma.payrollRecord.create({
+      data: {
+        employeeId,
+        year,
+        month,
+        // 급여 구성 스냅샷
+        baseSalary: payroll.baseSalary,
+        mealAllowance: payroll.mealAllowance,
+        transportAllowance: payroll.transportAllowance,
+        positionAllowance: payroll.positionAllowance,
+        taxFreeMeal: payroll.taxFreeMeal,
+        taxFreeTransport: payroll.taxFreeTransport,
+        useFixedOT: payroll.useFixedOT,
+        fixedOTAmount: payroll.fixedOTAmount,
+        fixedNightWorkAmount: payroll.fixedNightWorkAmount,
+        fixedHolidayWorkAmount: payroll.fixedHolidayWorkAmount,
+        // 변동 수당
+        variableOvertimeMinutes: payroll.variableOvertimeMinutes,
+        variableNightWorkMinutes: payroll.variableNightWorkMinutes,
+        variableHolidayMinutes: payroll.variableHolidayMinutes,
+        variableOvertimeAmount: payroll.variableOvertimeAmount,
+        variableNightWorkAmount: payroll.variableNightWorkAmount,
+        variableHolidayWorkAmount: payroll.variableHolidayWorkAmount,
+        // 계산 결과
+        totalGross: payroll.totalGross,
+        totalTaxable: payroll.totalTaxable,
+        totalInsurance: payroll.totalInsurance,
+        incomeTax: payroll.incomeTax,
+        localIncomeTax: payroll.localIncomeTax,
+        netSalary: payroll.netSalary,
+        nationalPension: payroll.nationalPension,
+        healthInsurance: payroll.healthInsurance,
+        longTermCare: payroll.longTermCare,
+        employmentInsurance: payroll.employmentInsurance,
+      },
+    });
+
+    revalidatePath("/payroll");
+
+    return { success: true, data: record };
+  });
+
+/**
+ * 급여 확정 (일괄)
+ */
+export const confirmPayrollRecords = authActionClient
+  .inputSchema(confirmPayrollSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { ids } = parsedInput;
+
+    // 관리자 권한 체크
+    if (ctx.userRole !== "admin") {
+      throw new ActionError("관리자만 급여를 확정할 수 있습니다.");
+    }
+
+    // 일괄 확정 (NULL 체크 포함)
+    const result = await prisma.payrollRecord.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        isConfirmed: true,
+        confirmedAt: new Date(),
+        confirmedBy: ctx.userId ?? null, // NULL 체크
+      },
+    });
+
+    revalidatePath("/payroll");
+
+    return { success: true, count: result.count };
+  });
+
+/**
+ * 급여 기록 삭제
+ */
+export const deletePayrollRecord = authActionClient
+  .inputSchema(deletePayrollSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id } = parsedInput;
+
+    // 기록 조회
+    const existing = await prisma.payrollRecord.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new ActionError("해당 급여 기록을 찾을 수 없습니다.");
+    }
+
+    // 확정된 기록 삭제 방지
+    if (existing.isConfirmed) {
+      throw new ActionError("확정된 급여는 삭제할 수 없습니다.");
+    }
+
+    // 삭제
+    await prisma.payrollRecord.delete({ where: { id } });
+
+    revalidatePath("/payroll");
+
+    return { success: true };
+  });

@@ -175,6 +175,7 @@ model Employee {
   attendanceRecords AttendanceRecord[]
   leaveRecords      LeaveRecord[]
   workSchedules     WorkSchedule[]
+  payrollRecords    PayrollRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -250,6 +251,71 @@ model LeaveRecord {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 급여 대장 (월별 급여 확정 이력)
+// ─────────────────────────────────────────────
+
+model PayrollRecord {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // 귀속 연월
+  year  Int
+  month Int
+
+  // 급여 구성 (저장 시점 스냅샷)
+  baseSalary         Int // 기본급
+  mealAllowance      Int // 식대
+  transportAllowance Int // 교통비
+  positionAllowance  Int // 직책수당
+
+  // 비과세 여부 (스냅샷)
+  taxFreeMeal      Boolean @default(true)
+  taxFreeTransport Boolean @default(true)
+
+  // 고정OT (스냅샷)
+  useFixedOT             Boolean @default(false)
+  fixedOTAmount          Int     @default(0)
+  fixedNightWorkAmount   Int     @default(0)
+  fixedHolidayWorkAmount Int     @default(0)
+
+  // 근태 기반 변동 수당 (계산값)
+  variableOvertimeMinutes   Int @default(0) // 연장근로 총 분
+  variableNightWorkMinutes  Int @default(0) // 야간근로 총 분
+  variableHolidayMinutes    Int @default(0) // 휴일근로 총 분 (추후 구현)
+  variableOvertimeAmount    Int @default(0) // 연장수당 금액
+  variableNightWorkAmount   Int @default(0) // 야간수당 금액
+  variableHolidayWorkAmount Int @default(0) // 휴일수당 금액
+
+  // 계산 결과
+  totalGross     Int // 총 급여
+  totalTaxable   Int // 과세 대상
+  totalInsurance Int // 4대보험료 합계
+  incomeTax      Int // 소득세
+  localIncomeTax Int // 지방소득세
+  netSalary      Int // 실수령액
+
+  // 4대보험 세부 (참고용)
+  nationalPension     Int @default(0)
+  healthInsurance     Int @default(0)
+  longTermCare        Int @default(0)
+  employmentInsurance Int @default(0)
+
+  // 상태 관리
+  isConfirmed Boolean   @default(false) // 급여 확정 여부
+  confirmedAt DateTime? // 확정 시각
+  confirmedBy String?   // 확정자 userId
+
+  // 감사
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, year, month], name: "employeeId_year_month")
+  @@index([year, month])
+  @@index([isConfirmed, year, month])
 }
 
 // ─────────────────────────────────────────────

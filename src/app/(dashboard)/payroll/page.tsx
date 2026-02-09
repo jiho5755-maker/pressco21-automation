@@ -1,24 +1,78 @@
-// 급여 관리 페이지 — Step 4에서 본격 구현 예정
-import { Wallet } from "lucide-react";
+// 급여 관리 페이지 (Server Component)
+import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { PayrollPageClient } from "./client";
 
-export default function PayrollPage() {
+export default async function PayrollPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; month?: string }>;
+}) {
+  const params = await searchParams;
+  const now = new Date();
+  const year = params.year ? parseInt(params.year) : now.getFullYear();
+  const month = params.month ? parseInt(params.month) : now.getMonth() + 1;
+
+  // 지정된 연월 급여 기록 조회
+  const payrollRecords = await prisma.payrollRecord.findMany({
+    where: { year, month },
+    include: {
+      employee: { include: { department: true } },
+    },
+    orderBy: [
+      { employee: { department: { sortOrder: "asc" } } },
+      { employee: { name: "asc" } },
+    ],
+  });
+
+  // 통계 계산
+  const stats = {
+    totalGross: payrollRecords.reduce((sum, r) => sum + r.totalGross, 0),
+    totalDeduction: payrollRecords.reduce(
+      (sum, r) => sum + r.totalInsurance + r.incomeTax + r.localIncomeTax,
+      0
+    ),
+    totalNetSalary: payrollRecords.reduce((sum, r) => sum + r.netSalary, 0),
+    confirmedCount: payrollRecords.filter((r) => r.isConfirmed).length,
+    totalCount: payrollRecords.length,
+  };
+
+  // 활성 직원 목록 (급여 생성용)
+  const employees = await prisma.employee.findMany({
+    where: { status: "ACTIVE" },
+    select: {
+      id: true,
+      employeeNo: true,
+      name: true,
+      departmentId: true,
+      useFixedOT: true,
+    },
+    orderBy: { name: "asc" },
+  });
+
+  // 부서 목록 (필터용)
+  const departments = await prisma.department.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
   return (
     <>
       <PageHeader
         title="급여 관리"
-        description="급여 계산 및 명세서를 관리합니다."
+        description="월별 급여를 계산, 확정 및 관리합니다."
       />
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Wallet className="h-12 w-12 mb-4" />
-          <p className="text-lg font-medium">준비 중입니다</p>
-          <p className="text-sm mt-1">
-            월별 급여 자동계산, 명세서 조회, Excel 내보내기 기능이 곧 추가됩니다.
-          </p>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div>로딩 중...</div>}>
+        <PayrollPageClient
+          initialRecords={payrollRecords}
+          initialStats={stats}
+          employees={employees}
+          departments={departments}
+          initialYear={year}
+          initialMonth={month}
+        />
+      </Suspense>
     </>
   );
 }

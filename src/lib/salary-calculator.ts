@@ -20,6 +20,10 @@ export interface SalaryComponents {
   fixedOTAmount?: number;
   fixedNightWorkAmount?: number;
   fixedHolidayWorkAmount?: number;
+  // 변동 수당 (Phase 1-D 추가)
+  variableOvertimeAmount?: number;
+  variableNightWorkAmount?: number;
+  variableHolidayWorkAmount?: number;
 }
 
 /** 종합 급여 계산 결과 */
@@ -76,7 +80,7 @@ export function calculateHourlyRate(
 
 /**
  * 총 급여 계산 (Total Gross Salary)
- * 고정OT 포함
+ * 고정OT + 변동 수당 포함
  */
 export function calculateTotalGross(components: SalaryComponents): number {
   const baseGross =
@@ -91,7 +95,13 @@ export function calculateTotalGross(components: SalaryComponents): number {
       (components.fixedHolidayWorkAmount || 0)
     : 0;
 
-  return baseGross + fixedOT;
+  // 변동 수당 (Phase 1-D)
+  const variableAllowances =
+    (components.variableOvertimeAmount || 0) +
+    (components.variableNightWorkAmount || 0) +
+    (components.variableHolidayWorkAmount || 0);
+
+  return baseGross + fixedOT + variableAllowances;
 }
 
 /**
