@@ -46,8 +46,8 @@ export function AttendancePageClient({
   departments,
 }: AttendancePageClientProps) {
   // 필터 상태
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -61,14 +61,14 @@ export function AttendancePageClient({
     let filtered = initialRecords;
 
     // 부서 필터
-    if (selectedDepartment) {
+    if (selectedDepartment && selectedDepartment !== "all") {
       filtered = filtered.filter(
         (r) => r.employee.departmentId === selectedDepartment
       );
     }
 
     // 직원 필터
-    if (selectedEmployee) {
+    if (selectedEmployee && selectedEmployee !== "all") {
       filtered = filtered.filter((r) => r.employeeId === selectedEmployee);
     }
 

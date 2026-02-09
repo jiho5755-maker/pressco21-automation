@@ -143,13 +143,14 @@ model Employee {
   taxFreeTransport   Boolean @default(true) // 교통비 비과세 여부
 
   // ── 포괄임금(고정OT) 설정 ──
-  useFixedOT            Boolean @default(false) // 고정OT 사용 여부
-  fixedOTHours          Int?    // 월 고정 연장근로 시간 (예: 20시간)
-  fixedOTAmount         Int?    // 월 고정 연장수당 금액 (원)
-  fixedNightWorkHours   Int?    @default(0) // 월 고정 야간근로 시간
-  fixedNightWorkAmount  Int?    @default(0) // 월 고정 야간수당 금액
-  fixedHolidayWorkHours Int?    @default(0) // 월 고정 휴일근로 시간
-  fixedHolidayWorkAmount Int?   @default(0) // 월 고정 휴일수당 금액
+  useFixedOT                  Boolean @default(false) // 고정OT 사용 여부
+  fixedOTHours                Int?    // 월 고정 연장근로 시간 (예: 20시간)
+  fixedOTAmount               Int?    // 월 고정 연장수당 금액 (원)
+  fixedNightWorkHours         Int?    @default(0) // 월 고정 야간근로 시간
+  fixedNightWorkAmount        Int?    @default(0) // 월 고정 야간수당 금액
+  fixedHolidayWorkHours       Int?    @default(0) // 월 고정 휴일근로 시간
+  fixedHolidayWorkAmount      Int?    @default(0) // 월 고정 휴일수당 금액
+  fixedOTAgreementConfirmed   Boolean @default(false) // 서면 합의 확인 여부 (법적 필수)
 
   bankName    String?
   bankAccount String?

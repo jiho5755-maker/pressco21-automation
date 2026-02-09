@@ -48,9 +48,10 @@ export function AttendanceFilters({
   onMonthChange,
 }: AttendanceFiltersProps) {
   // 부서별 직원 필터링
-  const filteredEmployees = selectedDepartment
-    ? employees.filter((emp) => emp.departmentId === selectedDepartment)
-    : employees;
+  const filteredEmployees =
+    selectedDepartment && selectedDepartment !== "all"
+      ? employees.filter((emp) => emp.departmentId === selectedDepartment)
+      : employees;
 
   return (
     <div className="flex flex-wrap gap-3 items-end">
@@ -64,7 +65,7 @@ export function AttendanceFilters({
             <SelectValue placeholder="전체 부서" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">전체 부서</SelectItem>
+            <SelectItem value="all">전체 부서</SelectItem>
             {departments.map((dept) => (
               <SelectItem key={dept.id} value={dept.id}>
                 {dept.name}
@@ -84,7 +85,7 @@ export function AttendanceFilters({
             <SelectValue placeholder="전체 직원" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">전체 직원</SelectItem>
+            <SelectItem value="all">전체 직원</SelectItem>
             {filteredEmployees.map((emp) => (
               <SelectItem key={emp.id} value={emp.id}>
                 {emp.name} ({emp.department.name})
