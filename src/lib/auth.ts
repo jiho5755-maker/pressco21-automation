@@ -1,11 +1,14 @@
-// Auth.js 설정 — Credentials 기반 사내 인증
+// Auth.js v5 — Prisma DB 인증 + RBAC
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  pages: {
-    signIn: "/login",
-  },
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" }, // Credentials + PrismaAdapter = JWT 필수
+  pages: { signIn: "/login" },
   providers: [
     Credentials({
       credentials: {
@@ -13,26 +16,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "비밀번호", type: "password" },
       },
       async authorize(credentials) {
-        // 환경변수에 설정된 관리자 계정과 비교
-        const adminEmail = process.env.AUTH_ADMIN_EMAIL;
-        const adminPassword = process.env.AUTH_ADMIN_PASSWORD;
+        if (!credentials?.email || !credentials?.password) return null;
 
-        if (
-          credentials?.email === adminEmail &&
-          credentials?.password === adminPassword
-        ) {
-          return {
-            id: "1",
-            name: "관리자",
-            email: adminEmail,
-          };
-        }
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
+        if (!user?.password) return null;
 
-        return null;
+        const isValid = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        );
+        if (!isValid) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
       },
     }),
   ],
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.role = (user as { role?: string }).role;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
     authorized({ auth }) {
       return !!auth?.user;
     },
