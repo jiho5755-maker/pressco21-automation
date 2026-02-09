@@ -1,5 +1,13 @@
 // 사이드바 메뉴 항목 정의 — NavGroup[] 구조
-import { LayoutDashboard, Users, Receipt, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Clock,
+  CalendarDays,
+  Wallet,
+  Receipt,
+  Settings,
+} from "lucide-react";
 import type { NavGroup } from "@/types";
 
 export const navGroups: NavGroup[] = [
@@ -23,11 +31,29 @@ export const navGroups: NavGroup[] = [
         icon: Users,
         description: "직원 정보 조회 및 관리",
       },
+      {
+        title: "근태 관리",
+        href: "/attendance",
+        icon: Clock,
+        description: "출퇴근 기록 및 근태 현황",
+      },
+      {
+        title: "휴가 관리",
+        href: "/leaves",
+        icon: CalendarDays,
+        description: "휴가 신청 및 관리",
+      },
     ],
   },
   {
     label: "재무",
     items: [
+      {
+        title: "급여 관리",
+        href: "/payroll",
+        icon: Wallet,
+        description: "급여 계산 및 명세서",
+      },
       {
         title: "경비 신청",
         href: "/expenses",
