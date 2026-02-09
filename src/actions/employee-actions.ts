@@ -124,3 +124,77 @@ export const bulkUpdateWorkType = authActionClient
     revalidatePath("/employees");
     return { updatedCount: employeeIds.length };
   });
+
+// ── 급여/보험 정보 수정 ──
+const updateEmployeeSalarySchema = z.object({
+  id: z.string(),
+  salaryType: z.enum(["MONTHLY", "HOURLY"]),
+  baseSalary: z.number().min(0, "기본급은 0 이상이어야 합니다."),
+  bankName: z.string().optional().or(z.literal("")),
+  bankAccount: z.string().optional().or(z.literal("")),
+  nationalPension: z.boolean(),
+  healthInsurance: z.boolean(),
+  employmentInsurance: z.boolean(),
+  industrialAccident: z.boolean(),
+  dependents: z.number().min(0).default(1),
+});
+
+export const updateEmployeeSalary = authActionClient
+  .inputSchema(updateEmployeeSalarySchema)
+  .action(async ({ parsedInput: { id, ...data } }) => {
+    const existing = await prisma.employee.findUnique({ where: { id } });
+    if (!existing) throw new ActionError("직원을 찾을 수 없습니다.");
+
+    const employee = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...data,
+        bankName: data.bankName === "" ? null : data.bankName,
+        bankAccount: data.bankAccount === "" ? null : data.bankAccount,
+      },
+    });
+
+    revalidatePath(`/employees/${id}`);
+    revalidatePath("/employees");
+    return { employee };
+  });
+
+// ── 근무 정보 수정 ──
+const updateEmployeeWorkSchema = z.object({
+  id: z.string(),
+  workType: z.enum(["OFFICE", "FLEXIBLE_HOURS", "REMOTE", "HYBRID"]),
+  weeklyWorkHours: z.number().min(1).max(52),
+  workStartTime: z.string().regex(/^\d{2}:\d{2}$/, "HH:mm 형식으로 입력해주세요."),
+  workEndTime: z.string().regex(/^\d{2}:\d{2}$/, "HH:mm 형식으로 입력해주세요."),
+  breakMinutes: z.number().min(0),
+  flexStartTime: z.string().optional().or(z.literal("")),
+  flexEndTime: z.string().optional().or(z.literal("")),
+  remoteWorkDays: z.array(z.enum(["MON", "TUE", "WED", "THU", "FRI"])).optional(),
+});
+
+export const updateEmployeeWork = authActionClient
+  .inputSchema(updateEmployeeWorkSchema)
+  .action(async ({ parsedInput: { id, ...data } }) => {
+    const existing = await prisma.employee.findUnique({ where: { id } });
+    if (!existing) throw new ActionError("직원을 찾을 수 없습니다.");
+
+    const employee = await prisma.employee.update({
+      where: { id },
+      data: {
+        workType: data.workType,
+        weeklyWorkHours: data.weeklyWorkHours,
+        workStartTime: data.workStartTime,
+        workEndTime: data.workEndTime,
+        breakMinutes: data.breakMinutes,
+        flexStartTime: data.flexStartTime || null,
+        flexEndTime: data.flexEndTime || null,
+        remoteWorkDays: data.remoteWorkDays
+          ? JSON.stringify(data.remoteWorkDays)
+          : null,
+      },
+    });
+
+    revalidatePath(`/employees/${id}`);
+    revalidatePath("/employees");
+    return { employee };
+  });
