@@ -90,6 +90,11 @@ export const workTypeConfig: Record<string, BadgeConfig> = {
 
 // ── 휴직 유형 Badge ──
 export const leaveTypeConfig: Record<string, BadgeConfig> = {
+  ANNUAL: {
+    label: "연차",
+    className:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  },
   MATERNITY: {
     label: "출산휴가",
     className:
@@ -108,10 +113,39 @@ export const leaveTypeConfig: Record<string, BadgeConfig> = {
   SICK: {
     label: "병가",
     className:
-      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+      "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
   },
   PERSONAL: {
     label: "개인사유",
+    className:
+      "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
+  },
+  COMPENSATORY: {
+    label: "대체휴무",
+    className:
+      "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
+  },
+};
+
+// ── 휴가 상태 Badge ──
+export const leaveStatusConfig: Record<string, BadgeConfig> = {
+  PENDING: {
+    label: "대기",
+    className:
+      "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+  },
+  APPROVED: {
+    label: "승인",
+    className:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+  },
+  REJECTED: {
+    label: "반려",
+    className:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  },
+  CANCELLED: {
+    label: "취소",
     className:
       "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
   },

@@ -522,6 +522,73 @@ async function main() {
   }
   console.log("  경비 5건 생성");
 
+  // ─── 6. 휴가 기록 ───
+  const leaveRecordsData = [
+    {
+      employeeId: employees["EMP001"].id,
+      type: "ANNUAL",
+      startDate: new Date("2025-01-10"),
+      endDate: new Date("2025-01-12"),
+      days: 3,
+      status: "APPROVED",
+      requestedAt: new Date("2025-01-05"),
+      approvedBy: admin.id,
+      approvedAt: new Date("2025-01-06"),
+      reason: "가족 여행",
+    },
+    {
+      employeeId: employees["EMP002"].id,
+      type: "ANNUAL",
+      startDate: new Date("2026-02-15"),
+      endDate: new Date("2026-02-15"),
+      days: 1,
+      status: "PENDING",
+      requestedAt: new Date("2026-02-10"),
+      reason: "개인 사정",
+    },
+    {
+      employeeId: employees["EMP006"].id,
+      type: "MATERNITY",
+      startDate: new Date("2025-11-01"),
+      endDate: new Date("2026-01-29"),
+      days: 90,
+      status: "APPROVED",
+      requestedAt: new Date("2025-10-15"),
+      approvedBy: admin.id,
+      approvedAt: new Date("2025-10-16"),
+      childBirthDate: new Date("2025-12-15"),
+      reason: "출산휴가",
+    },
+    {
+      employeeId: employees["EMP003"].id,
+      type: "ANNUAL",
+      startDate: new Date("2026-01-20"),
+      endDate: new Date("2026-01-20"),
+      days: 0.5,
+      halfDayType: "AM",
+      status: "APPROVED",
+      requestedAt: new Date("2026-01-18"),
+      approvedBy: admin.id,
+      approvedAt: new Date("2026-01-19"),
+      reason: "병원 진료",
+    },
+    {
+      employeeId: employees["EMP004"].id,
+      type: "SICK",
+      startDate: new Date("2026-02-01"),
+      endDate: new Date("2026-02-03"),
+      days: 3,
+      status: "REJECTED",
+      requestedAt: new Date("2026-01-30"),
+      rejectedReason: "증빙 서류 미제출",
+    },
+  ];
+
+  for (const leave of leaveRecordsData) {
+    await prisma.leaveRecord.create({ data: leave });
+  }
+  console.log("  휴가 기록 5건 생성");
+
   console.log("시드 데이터 생성 완료!");
 }
 

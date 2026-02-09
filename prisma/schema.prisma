@@ -26,8 +26,9 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  submittedExpenses Expense[] @relation("ExpenseSubmitter")
-  approvedExpenses  Expense[] @relation("ExpenseApprover")
+  submittedExpenses Expense[]     @relation("ExpenseSubmitter")
+  approvedExpenses  Expense[]     @relation("ExpenseApprover")
+  approvedLeaves    LeaveRecord[] @relation("LeaveApprover")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -107,14 +108,14 @@ model Employee {
 
   // ── 계약 정보 ──
   joinDate        DateTime // 입사일 (연차 기산점)
-  contractType    String   @default("REGULAR") // "REGULAR"|"CONTRACT"|"PARTTIME"|"REPLACEMENT"
+  contractType    String    @default("REGULAR") // "REGULAR"|"CONTRACT"|"PARTTIME"|"REPLACEMENT"
   contractEndDate DateTime? // 계약직/대체인력 종료일
   probationEnd    DateTime? // 수습 종료일
 
   // ── 대체인력 관계 (self-reference) ──
-  replacementForId String?
-  replacementFor   Employee?  @relation("ReplacementRelation", fields: [replacementForId], references: [id])
-  replacements     Employee[] @relation("ReplacementRelation")
+  replacementForId  String?
+  replacementFor    Employee?  @relation("ReplacementRelation", fields: [replacementForId], references: [id])
+  replacements      Employee[] @relation("ReplacementRelation")
   replacementReason String? // "MATERNITY"|"PARENTAL"|"SICK"
 
   // ── 근무 조건 (기본) ──
@@ -124,33 +125,33 @@ model Employee {
   breakMinutes    Int    @default(60) // 휴게시간(분)
 
   // ── 유연근무 설정 ──
-  workType      String  @default("OFFICE") // "OFFICE"|"FLEXIBLE_HOURS"|"REMOTE"|"HYBRID"
-  flexStartTime String? // 시차출퇴근 출근시간
-  flexEndTime   String? // 시차출퇴근 퇴근시간
+  workType       String  @default("OFFICE") // "OFFICE"|"FLEXIBLE_HOURS"|"REMOTE"|"HYBRID"
+  flexStartTime  String? // 시차출퇴근 출근시간
+  flexEndTime    String? // 시차출퇴근 퇴근시간
   remoteWorkDays String? // 재택근무 요일 JSON: "[\"MON\",\"WED\"]"
 
   // ── 급여 정보 ──
-  salaryType  String @default("MONTHLY") // "MONTHLY"|"HOURLY"
-  baseSalary  Int    @default(0) // 기본급(원) — 의미 변경: 총급여 → 기본급
+  salaryType String @default("MONTHLY") // "MONTHLY"|"HOURLY"
+  baseSalary Int    @default(0) // 기본급(원) — 의미 변경: 총급여 → 기본급
 
   // ── 수당 필드 ──
-  mealAllowance      Int     @default(0) // 식대(원)
-  transportAllowance Int     @default(0) // 교통비(원)
-  positionAllowance  Int     @default(0) // 직책수당(원)
+  mealAllowance      Int @default(0) // 식대(원)
+  transportAllowance Int @default(0) // 교통비(원)
+  positionAllowance  Int @default(0) // 직책수당(원)
 
   // ── 비과세 여부 ──
-  taxFreeMeal        Boolean @default(true) // 식대 비과세 여부
-  taxFreeTransport   Boolean @default(true) // 교통비 비과세 여부
+  taxFreeMeal      Boolean @default(true) // 식대 비과세 여부
+  taxFreeTransport Boolean @default(true) // 교통비 비과세 여부
 
   // ── 포괄임금(고정OT) 설정 ──
-  useFixedOT                  Boolean @default(false) // 고정OT 사용 여부
-  fixedOTHours                Int?    // 월 고정 연장근로 시간 (예: 20시간)
-  fixedOTAmount               Int?    // 월 고정 연장수당 금액 (원)
-  fixedNightWorkHours         Int?    @default(0) // 월 고정 야간근로 시간
-  fixedNightWorkAmount        Int?    @default(0) // 월 고정 야간수당 금액
-  fixedHolidayWorkHours       Int?    @default(0) // 월 고정 휴일근로 시간
-  fixedHolidayWorkAmount      Int?    @default(0) // 월 고정 휴일수당 금액
-  fixedOTAgreementConfirmed   Boolean @default(false) // 서면 합의 확인 여부 (법적 필수)
+  useFixedOT                Boolean @default(false) // 고정OT 사용 여부
+  fixedOTHours              Int? // 월 고정 연장근로 시간 (예: 20시간)
+  fixedOTAmount             Int? // 월 고정 연장수당 금액 (원)
+  fixedNightWorkHours       Int?    @default(0) // 월 고정 야간근로 시간
+  fixedNightWorkAmount      Int?    @default(0) // 월 고정 야간수당 금액
+  fixedHolidayWorkHours     Int?    @default(0) // 월 고정 휴일근로 시간
+  fixedHolidayWorkAmount    Int?    @default(0) // 월 고정 휴일수당 금액
+  fixedOTAgreementConfirmed Boolean @default(false) // 서면 합의 확인 여부 (법적 필수)
 
   bankName    String?
   bankAccount String?
@@ -190,9 +191,9 @@ model WorkSchedule {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-  dayOfWeek Int     // 0(일)~6(토)
-  startTime String  // HH:mm
-  endTime   String  // HH:mm
+  dayOfWeek Int // 0(일)~6(토)
+  startTime String // HH:mm
+  endTime   String // HH:mm
   isRemote  Boolean @default(false) // 해당 요일 재택 여부
   isWorkDay Boolean @default(true) // 근무일 여부
 
@@ -240,17 +241,41 @@ model LeaveRecord {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
+  // ── 휴가 기본 정보 ──
   type      String // "ANNUAL"|"MATERNITY"|"PARENTAL"|"SPOUSE_MATERNITY"|"SICK"|"PERSONAL"|"COMPENSATORY"
   startDate DateTime
   endDate   DateTime
   days      Float // 사용일수 (0.5 = 반차)
-  status    String    @default("APPROVED") // "PENDING"|"APPROVED"|"REJECTED"|"CANCELLED"
-  reason    String?
 
+  // ── 반차 구분 (법적 요건) ──
+  halfDayType String? // "AM"|"PM" (days=0.5일 때만 사용)
+
+  // ── 결재 상태 및 이력 ──
+  status      String   @default("PENDING") // "PENDING"|"APPROVED"|"REJECTED"|"CANCELLED"
+  requestedAt DateTime @default(now()) // 신청 일시
+
+  approvedBy String? // 승인자 userId
+  approver   User?     @relation("LeaveApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  approvedAt DateTime? // 승인 일시
+
+  rejectedReason String? // 반려 사유 (시기변경권 행사 시 필수)
+
+  // ── 신청 사유 ──
+  reason String?
+
+  // ── 출산/육아 전용 필드 ──
   childBirthDate DateTime? // 자녀 출생일 (출산휴가/육아휴직 기간 자동계산용)
 
+  // ── 감사 추적 ──
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // ── 인덱스 ──
+  @@index([employeeId, startDate]) // 직원별 기간 조회
+  @@index([employeeId, status]) // 직원별 상태 필터링
+  @@index([status, requestedAt]) // 대기 중인 신청 목록
+  @@index([type, startDate]) // 휴가 유형별 통계
+  @@index([startDate, endDate]) // 기간 범위 조회
 }
 
 // ─────────────────────────────────────────────
@@ -307,7 +332,7 @@ model PayrollRecord {
   // 상태 관리
   isConfirmed Boolean   @default(false) // 급여 확정 여부
   confirmedAt DateTime? // 확정 시각
-  confirmedBy String?   // 확정자 userId
+  confirmedBy String? // 확정자 userId
 
   // 감사
   createdAt DateTime @default(now())

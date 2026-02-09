@@ -18,37 +18,13 @@ import {
 } from "@/components/ui/table";
 import { getAnnualLeaveSummary } from "@/lib/leave-calculator";
 import { LEAVE_TYPES } from "@/lib/constants";
-import { leaveTypeConfig } from "@/lib/ui-config";
+import { leaveTypeConfig, leaveStatusConfig } from "@/lib/ui-config";
 import type { Employee, LeaveRecord } from "@prisma/client";
 
 interface EmployeeLeaveTabProps {
   employee: Employee;
   leaveRecords: LeaveRecord[];
 }
-
-// 휴가 상태 Badge
-const leaveStatusConfig: Record<string, { label: string; className: string }> = {
-  PENDING: {
-    label: "대기",
-    className:
-      "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
-  },
-  APPROVED: {
-    label: "승인",
-    className:
-      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
-  },
-  REJECTED: {
-    label: "반려",
-    className:
-      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
-  },
-  CANCELLED: {
-    label: "취소",
-    className:
-      "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
-  },
-};
 
 export function EmployeeLeaveTab({
   employee,
@@ -121,8 +97,9 @@ export function EmployeeLeaveTab({
                   <TableHead>유형</TableHead>
                   <TableHead>기간</TableHead>
                   <TableHead className="text-right">일수</TableHead>
-                  <TableHead>사유</TableHead>
+                  <TableHead>신청일</TableHead>
                   <TableHead>상태</TableHead>
+                  <TableHead>사유</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -139,16 +116,25 @@ export function EmployeeLeaveTab({
                   return (
                     <TableRow key={record.id}>
                       <TableCell>
-                        {typeCfg ? (
-                          <Badge
-                            variant="outline"
-                            className={typeCfg.className}
-                          >
-                            {typeCfg.label}
-                          </Badge>
-                        ) : (
-                          typeLabel
-                        )}
+                        <div className="space-y-1">
+                          {typeCfg ? (
+                            <Badge
+                              variant="outline"
+                              className={typeCfg.className}
+                            >
+                              {typeCfg.label}
+                            </Badge>
+                          ) : (
+                            typeLabel
+                          )}
+                          {record.halfDayType && (
+                            <div>
+                              <Badge variant="outline" className="border-dashed text-xs">
+                                {record.halfDayType === "AM" ? "오전" : "오후"} 반차
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm">
                         {format(new Date(record.startDate), "yyyy.MM.dd", {
@@ -160,20 +146,30 @@ export function EmployeeLeaveTab({
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        {record.days % 1 === 0
-                          ? `${record.days}일`
-                          : `${record.days}일`}
+                        {record.days}일
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(record.requestedAt), "MM-dd", {
+                          locale: ko,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge
+                            variant="outline"
+                            className={statusCfg.className}
+                          >
+                            {statusCfg.label}
+                          </Badge>
+                          {record.status === "REJECTED" && record.rejectedReason && (
+                            <div className="text-xs text-muted-foreground max-w-[150px] truncate">
+                              사유: {record.rejectedReason}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {record.reason || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={statusCfg.className}
-                        >
-                          {statusCfg.label}
-                        </Badge>
                       </TableCell>
                     </TableRow>
                   );

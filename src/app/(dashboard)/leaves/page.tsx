@@ -1,24 +1,75 @@
-// 휴가 관리 페이지 — Step 3에서 본격 구현 예정
-import { CalendarDays } from "lucide-react";
+// 휴가 관리 페이지
+import { Suspense } from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma";
+import { LeavesPageClient } from "./client";
 
-export default function LeavesPage() {
+export default async function LeavesPage() {
+  // 1. 휴가 기록 조회 (전체 기간, 최근 6개월)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const leaveRecords = await prisma.leaveRecord.findMany({
+    where: {
+      requestedAt: {
+        gte: sixMonthsAgo, // 최근 6개월
+      },
+    },
+    include: {
+      employee: {
+        select: {
+          id: true,
+          employeeNo: true,
+          name: true,
+        },
+      },
+      approver: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      requestedAt: "desc",
+    },
+  });
+
+  // 2. 통계 계산
+  const stats = {
+    totalCount: leaveRecords.length,
+    approvedCount: leaveRecords.filter((r) => r.status === "APPROVED").length,
+    pendingCount: leaveRecords.filter((r) => r.status === "PENDING").length,
+    rejectedCount: leaveRecords.filter((r) => r.status === "REJECTED").length,
+  };
+
+  // 3. 직원 목록 조회 (재직자만, department 포함)
+  const employees = await prisma.employee.findMany({
+    where: {
+      status: "ACTIVE",
+    },
+    include: {
+      department: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
   return (
     <>
       <PageHeader
         title="휴가 관리"
         description="휴가 신청 및 승인 현황을 관리합니다."
       />
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <CalendarDays className="h-12 w-12 mb-4" />
-          <p className="text-lg font-medium">준비 중입니다</p>
-          <p className="text-sm mt-1">
-            휴가 신청, 잔여 연차 확인, 관리자 승인 기능이 곧 추가됩니다.
-          </p>
-        </CardContent>
-      </Card>
+
+      <Suspense fallback={<div>로딩 중...</div>}>
+        <LeavesPageClient
+          leaveRecords={leaveRecords}
+          stats={stats}
+          employees={employees}
+        />
+      </Suspense>
     </>
   );
 }
