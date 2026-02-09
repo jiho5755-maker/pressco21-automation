@@ -1,0 +1,1560 @@
+[ 4195763ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4195764ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4207652ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4207652ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4207993ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4207994ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4217929ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4217929ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4223797ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4223797ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4234175ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4234176ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4234979ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4234979ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4240028ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4240028ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4245230ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4245231ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4245330ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4245331ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4251650ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4251650ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4257040ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4257041ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4259253ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4259253ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4266619ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4266619ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4274025ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4274025ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4280943ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4280943ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4287813ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4287813ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4293487ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4293487ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4302783ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4302783ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4403020ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4403021ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4403171ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4403171ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4404583ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4404583ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4469713ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4469713ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4484848ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4484848ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4499485ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4499485ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4513605ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4513605ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4522256ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4522257ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4532706ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4532706ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4545117ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4545117ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4715245ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:14:1
+Module not found: Can't resolve '@/components/ui/alert'
+  12 | import { Input } from "@/components/ui/input";
+  13 | import { Checkbox } from "@/components/ui/checkbox";
+> 14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  15 | import {
+  16 |   Dialog,
+  17 |   DialogContent,
+
+Import map: aliased to relative './src/components/ui/alert' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
+[ 4715245ms] [ERROR] ./src/components/employees/employee-edit-dialog.tsx:13:1
+Module not found: Can't resolve '@/components/ui/checkbox'
+  11 | import { Button } from "@/components/ui/button";
+  12 | import { Input } from "@/components/ui/input";
+> 13 | import { Checkbox } from "@/components/ui/checkbox";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  14 | import { Alert, AlertDescription } from "@/components/ui/alert";
+  15 | import {
+  16 |   Dialog,
+
+Import map: aliased to relative './src/components/ui/checkbox' inside of [project]/
+
+Import traces:
+  Client Component Browser:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Client Component Browser]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/employees/employee-edit-dialog.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Client Component SSR]
+    ./src/components/employees/employee-detail-header.tsx [Server Component]
+    ./src/app/(dashboard)/employees/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_b0daae9a._.js:2359
