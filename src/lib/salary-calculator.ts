@@ -15,6 +15,11 @@ export interface SalaryComponents {
   positionAllowance: number;
   taxFreeMeal: boolean;
   taxFreeTransport: boolean;
+  // 고정OT (포괄임금제)
+  useFixedOT?: boolean;
+  fixedOTAmount?: number;
+  fixedNightWorkAmount?: number;
+  fixedHolidayWorkAmount?: number;
 }
 
 /** 종합 급여 계산 결과 */
@@ -24,13 +29,19 @@ export interface SalaryCalculationResult {
   mealAllowance: number;
   transportAllowance: number;
   positionAllowance: number;
-  totalGross: number; // 총 급여
+  totalGross: number; // 총 급여 (고정OT 포함)
+
+  // 고정OT
+  fixedOTAmount: number;
+  fixedNightWorkAmount: number;
+  fixedHolidayWorkAmount: number;
+  totalFixedOT: number; // 고정OT 합계
 
   // 비과세 처리
   taxFreeMealAmount: number;
   taxFreeTransportAmount: number;
   totalTaxFree: number;
-  totalTaxable: number; // 과세 대상 급여
+  totalTaxable: number; // 과세 대상 급여 (고정OT 포함)
 
   // 4대보험료 (근로자 부담분)
   nationalPension: number;
@@ -49,6 +60,9 @@ export interface SalaryCalculationResult {
 
 /**
  * 통상시급 계산
+ * ⚠️ 중요: 고정OT는 제외 (가산수당 이중 계산 방지)
+ * 연장/야간/휴일 수당 = 통상시급 × 가산율(1.5배)
+ *
  * 월급제: baseSalary / 209시간
  * 시급제: baseSalary 그대로
  */
@@ -62,14 +76,22 @@ export function calculateHourlyRate(
 
 /**
  * 총 급여 계산 (Total Gross Salary)
+ * 고정OT 포함
  */
 export function calculateTotalGross(components: SalaryComponents): number {
-  return (
+  const baseGross =
     components.baseSalary +
     components.mealAllowance +
     components.transportAllowance +
-    components.positionAllowance
-  );
+    components.positionAllowance;
+
+  const fixedOT = components.useFixedOT
+    ? (components.fixedOTAmount || 0) +
+      (components.fixedNightWorkAmount || 0) +
+      (components.fixedHolidayWorkAmount || 0)
+    : 0;
+
+  return baseGross + fixedOT;
 }
 
 /**
@@ -122,7 +144,7 @@ export function calculateMonthlyInsurance(
   employmentInsurance: number;
   totalInsurance: number;
 } {
-  const { nationalPension, healthInsurance, employmentInsurance, dependents = 1 } = options;
+  const { nationalPension, healthInsurance, employmentInsurance } = options;
   const { rates, caps, floors } = INSURANCE_RATES_2026;
 
   let nationalPensionAmount = 0;
@@ -131,20 +153,23 @@ export function calculateMonthlyInsurance(
       Math.min(totalTaxable, caps.nationalPension),
       floors.nationalPension
     );
-    nationalPensionAmount = Math.round(cappedSalary * rates.nationalPension);
+    // 원 단위 절사 (payroll-tax-expert 권장)
+    nationalPensionAmount = Math.floor(cappedSalary * rates.nationalPension);
   }
 
   let healthInsuranceAmount = 0;
   let longTermCareAmount = 0;
   if (healthInsurance) {
     const cappedSalary = Math.min(totalTaxable, caps.healthInsurance);
-    healthInsuranceAmount = Math.round(cappedSalary * rates.healthInsurance);
-    longTermCareAmount = Math.round(healthInsuranceAmount * rates.longTermCare);
+    // 원 단위 절사 (payroll-tax-expert 권장)
+    healthInsuranceAmount = Math.floor(cappedSalary * rates.healthInsurance);
+    longTermCareAmount = Math.floor(healthInsuranceAmount * rates.longTermCare);
   }
 
   let employmentInsuranceAmount = 0;
   if (employmentInsurance) {
-    employmentInsuranceAmount = Math.round(totalTaxable * rates.employmentInsurance);
+    // 원 단위 절사 (payroll-tax-expert 권장)
+    employmentInsuranceAmount = Math.floor(totalTaxable * rates.employmentInsurance);
   }
 
   const totalInsurance =
@@ -187,10 +212,12 @@ export function calculateIncomeTax(
   const deduction = Math.max(0, (dependents - 1) * 150000);
   incomeTax = Math.max(0, incomeTax - deduction);
 
-  const localIncomeTax = Math.round(incomeTax * 0.1); // 지방소득세 10%
+  // 10원 단위 절사 (payroll-tax-expert 권장)
+  incomeTax = Math.floor(incomeTax / 10) * 10;
+  const localIncomeTax = Math.floor((incomeTax * 0.1) / 10) * 10; // 지방소득세도 10원 단위 절사
 
   return {
-    incomeTax: Math.round(incomeTax),
+    incomeTax,
     localIncomeTax,
   };
 }
@@ -220,12 +247,25 @@ export function calculateSalary(
 
   const netSalary = totalGross - insurance.totalInsurance - incomeTax - localIncomeTax;
 
+  // 고정OT 합계
+  const fixedOTAmount = components.fixedOTAmount || 0;
+  const fixedNightWorkAmount = components.fixedNightWorkAmount || 0;
+  const fixedHolidayWorkAmount = components.fixedHolidayWorkAmount || 0;
+  const totalFixedOT = components.useFixedOT
+    ? fixedOTAmount + fixedNightWorkAmount + fixedHolidayWorkAmount
+    : 0;
+
   return {
     baseSalary: components.baseSalary,
     mealAllowance: components.mealAllowance,
     transportAllowance: components.transportAllowance,
     positionAllowance: components.positionAllowance,
     totalGross,
+
+    fixedOTAmount,
+    fixedNightWorkAmount,
+    fixedHolidayWorkAmount,
+    totalFixedOT,
 
     taxFreeMealAmount,
     taxFreeTransportAmount,

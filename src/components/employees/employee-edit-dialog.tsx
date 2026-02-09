@@ -38,7 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { POSITIONS, WORK_TYPES, WEEKDAYS } from "@/lib/constants";
+import { AlertTitle } from "@/components/ui/alert";
+import { POSITIONS, WORK_TYPES, WEEKDAYS, FIXED_OT_LIMITS_2026, LABOR_STANDARDS_2026 } from "@/lib/constants";
 import { validateMinimumWage } from "@/lib/validations/salary";
 import {
   updateEmployee,
@@ -95,8 +96,8 @@ const salarySchema = z
     taxFreeTransport: z.boolean().default(true),
 
     // 은행 정보
-    bankName: z.string().optional().or(z.literal("")),
-    bankAccount: z.string().optional().or(z.literal("")),
+    bankName: z.string().default(""),
+    bankAccount: z.string().default(""),
 
     // 4대보험
     nationalPension: z.boolean(),
@@ -105,14 +106,26 @@ const salarySchema = z
     industrialAccident: z.boolean(),
     dependents: z.number().min(0),
     childrenUnder20: z.number().int().min(0).max(20),
+
+    // 고정OT (포괄임금제)
+    useFixedOT: z.boolean().default(false),
+    fixedOTHours: z.number().min(0).max(52).default(0),
+    fixedOTAmount: z.number().min(0).default(0),
+    fixedNightWorkHours: z.number().min(0).default(0),
+    fixedNightWorkAmount: z.number().min(0).default(0),
+    fixedHolidayWorkHours: z.number().min(0).default(0),
+    fixedHolidayWorkAmount: z.number().min(0).default(0),
+    fixedOTAgreementConfirmed: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
-    // 최저임금 검증 (모든 수당 포함)
+    // 최저임금 검증 (모든 수당 포함, 비과세 초과분 반영)
     const validation = validateMinimumWage(
       data.baseSalary,
       data.mealAllowance,
       data.transportAllowance,
       data.positionAllowance,
+      data.taxFreeMeal,
+      data.taxFreeTransport,
       data.salaryType
     );
     if (!validation.isValid) {
@@ -139,11 +152,79 @@ const salarySchema = z
         path: ["transportAllowance"],
       });
     }
+
+    // 고정OT 검증
+    if (data.useFixedOT) {
+      // 서면 합의 확인 필수
+      if (!data.fixedOTAgreementConfirmed) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "포괄임금제 적용 시 서면 합의 확인이 필수입니다.",
+          path: ["fixedOTAgreementConfirmed"],
+        });
+      }
+
+      // 필수값 검증
+      if (!data.fixedOTHours || data.fixedOTHours <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "포괄임금제 사용 시 고정 연장근로 시간을 입력해주세요.",
+          path: ["fixedOTHours"],
+        });
+      }
+
+      if (!data.fixedOTAmount || data.fixedOTAmount <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "포괄임금제 사용 시 고정 연장근로 수당을 입력해주세요.",
+          path: ["fixedOTAmount"],
+        });
+      }
+
+      // 월 52시간 한도 검증
+      if (data.fixedOTHours && data.fixedOTHours > FIXED_OT_LIMITS_2026.maxMonthlyOTHours) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `월 ${FIXED_OT_LIMITS_2026.maxMonthlyOTHours}시간을 초과할 수 없습니다.`,
+          path: ["fixedOTHours"],
+        });
+      }
+
+      // 법정 최소 금액 검증 (통상시급 × 1.5 × 시간)
+      if (data.fixedOTHours && data.fixedOTAmount) {
+        const hourlyRate = Math.round(
+          data.baseSalary / LABOR_STANDARDS_2026.minimumWage.standardMonthlyHours
+        );
+        const minimumAmount = Math.ceil(hourlyRate * 1.5 * data.fixedOTHours);
+
+        if (data.fixedOTAmount < minimumAmount) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `법정 최소 금액(${minimumAmount.toLocaleString()}원)보다 낮습니다. (통상시급 ${hourlyRate.toLocaleString()}원 × 1.5 × ${data.fixedOTHours}시간)`,
+            path: ["fixedOTAmount"],
+          });
+        }
+      }
+
+      // 중복 가산 경고 (연장 야간근로는 2.0배이므로 한 곳에만 입력)
+      if (
+        data.fixedOTHours &&
+        data.fixedOTHours > 0 &&
+        data.fixedNightWorkHours &&
+        data.fixedNightWorkHours > 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "연장 야간근로는 2.0배 가산(연장 1.5 + 야간 0.5)입니다. 연장근로 시간에만 입력하고 야간근로는 0으로 설정하세요.",
+          path: ["fixedNightWorkHours"],
+        });
+      }
+    }
   });
 
 type InfoFormValues = z.infer<typeof infoSchema>;
 type WorkFormValues = z.infer<typeof workSchema>;
-type SalaryFormValues = z.infer<typeof salarySchema>;
 
 export function EmployeeEditDialog({
   employee,
@@ -218,7 +299,7 @@ export function EmployeeEditDialog({
   };
 
   // ── 급여/보험 폼 ──
-  const salaryForm = useForm<SalaryFormValues>({
+  const salaryForm = useForm({
     resolver: zodResolver(salarySchema),
     defaultValues: {
       salaryType: employee.salaryType as "MONTHLY" | "HOURLY",
@@ -236,6 +317,16 @@ export function EmployeeEditDialog({
       industrialAccident: employee.industrialAccident,
       dependents: employee.dependents,
       childrenUnder20: employee.childrenUnder20,
+
+      // 고정OT (포괄임금제)
+      useFixedOT: employee.useFixedOT || false,
+      fixedOTHours: employee.fixedOTHours || 0,
+      fixedOTAmount: employee.fixedOTAmount || 0,
+      fixedNightWorkHours: employee.fixedNightWorkHours || 0,
+      fixedNightWorkAmount: employee.fixedNightWorkAmount || 0,
+      fixedHolidayWorkHours: employee.fixedHolidayWorkHours || 0,
+      fixedHolidayWorkAmount: employee.fixedHolidayWorkAmount || 0,
+      fixedOTAgreementConfirmed: false, // 매번 재확인 필요
     },
   });
 
@@ -252,7 +343,7 @@ export function EmployeeEditDialog({
     }
   );
 
-  const onSubmitSalary = (data: SalaryFormValues) => {
+  const onSubmitSalary = (data: z.infer<typeof salarySchema>) => {
     executeSalary({ id: employee.id, ...data });
   };
 
@@ -262,20 +353,37 @@ export function EmployeeEditDialog({
   const mealAllowanceWatch = salaryForm.watch("mealAllowance");
   const transportAllowanceWatch = salaryForm.watch("transportAllowance");
   const positionAllowanceWatch = salaryForm.watch("positionAllowance");
+  const taxFreeMealWatch = salaryForm.watch("taxFreeMeal");
+  const taxFreeTransportWatch = salaryForm.watch("taxFreeTransport");
   const minimumWageWarning = validateMinimumWage(
     baseSalaryWatch || 0,
     mealAllowanceWatch || 0,
     transportAllowanceWatch || 0,
     positionAllowanceWatch || 0,
+    taxFreeMealWatch,
+    taxFreeTransportWatch,
     salaryTypeWatch
   );
 
-  // ── 총 급여 계산 ──
-  const totalGross =
+  // ── 총 급여 계산 (고정OT 포함) ──
+  const useFixedOTWatch = salaryForm.watch("useFixedOT");
+  const fixedOTAmountWatch = salaryForm.watch("fixedOTAmount");
+  const fixedNightWorkAmountWatch = salaryForm.watch("fixedNightWorkAmount");
+  const fixedHolidayWorkAmountWatch = salaryForm.watch("fixedHolidayWorkAmount");
+
+  const baseGross =
     (baseSalaryWatch || 0) +
     (mealAllowanceWatch || 0) +
     (transportAllowanceWatch || 0) +
     (positionAllowanceWatch || 0);
+
+  const totalFixedOT = useFixedOTWatch
+    ? (fixedOTAmountWatch || 0) +
+      (fixedNightWorkAmountWatch || 0) +
+      (fixedHolidayWorkAmountWatch || 0)
+    : 0;
+
+  const totalGross = baseGross + totalFixedOT;
 
   // ── 근무유형에 따른 조건부 필드 표시 ──
   const workTypeWatch = workForm.watch("workType");
@@ -799,6 +907,229 @@ export function EmployeeEditDialog({
                     </FormItem>
                   )}
                 />
+
+                {/* 포괄임금제 (고정OT) 섹션 */}
+                <div className="border-t pt-4 mt-4 space-y-4">
+                  <FormField
+                    control={salaryForm.control}
+                    name="useFixedOT"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-semibold cursor-pointer">
+                            포괄임금제 (고정OT) 사용
+                          </FormLabel>
+                        </div>
+                        <FormDescription>
+                          연장·야간·휴일 근로수당을 고정 금액으로 지급합니다.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  {salaryForm.watch("useFixedOT") && (
+                    <>
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>포괄임금제 적용 시 필수 확인사항</AlertTitle>
+                        <AlertDescription>
+                          서면 합의 필수 · 실제 근로시간 기록 유지 · 법정 최소 금액 준수
+                        </AlertDescription>
+                      </Alert>
+
+                      {/* 서면 합의 확인 (필수) */}
+                      <FormField
+                        control={salaryForm.control}
+                        name="fixedOTAgreementConfirmed"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-2 p-3 border-2 border-orange-500/50 rounded-md bg-orange-50 dark:bg-orange-950/20">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-semibold cursor-pointer text-orange-700 dark:text-orange-400">
+                                ✓ 포괄임금제 서면 합의서를 작성했습니다 (필수)
+                              </FormLabel>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* 고정 연장근로 */}
+                      <div className="grid grid-cols-2 gap-4 p-4 border rounded-md">
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedOTHours"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 연장근로 시간 (시간/월) *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="20"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>월 최대 52시간</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedOTAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 연장수당 (원/월) *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="310000"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                통상시급 × 1.5 × 시간 이상
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* 고정 야간근로 */}
+                      <div className="grid grid-cols-2 gap-4 p-4 border rounded-md">
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedNightWorkHours"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 야간근로 시간 (시간/월)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedNightWorkAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 야간수당 (원/월)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                통상시급 × 0.5 × 시간
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* 고정 휴일근로 */}
+                      <div className="grid grid-cols-2 gap-4 p-4 border rounded-md">
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedHolidayWorkHours"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 휴일근로 시간 (시간/월)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={salaryForm.control}
+                          name="fixedHolidayWorkAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>고정 휴일수당 (원/월)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                통상시급 × 1.5 × 시간
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 {/* 총 급여 미리보기 */}
                 <div className="border-t pt-4 mt-4">

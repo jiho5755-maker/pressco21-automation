@@ -28,10 +28,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **🚧 Phase 1 진행 중 (근태/급여)**
 1. ~~직원 관리 고도화~~ ✅ (상세 페이지 4탭 + 수정 Dialog + 연차/급여 계산 유틸)
-2. 근태 관리 (/attendance) — 플레이스홀더 생성 완료
-3. 휴가 관리 (/leaves) — 플레이스홀더 생성 완료
-4. 급여 관리 (/payroll) — 플레이스홀더 생성 완료
-5. 대시보드 리뉴얼
+2. ~~급여 구조 재설계~~ ✅ (수당 분리, 비과세 처리, 최저임금 검증)
+3. 근태 관리 (/attendance) — 플레이스홀더 생성 완료
+4. 휴가 관리 (/leaves) — 플레이스홀더 생성 완료
+5. 급여 관리 (/payroll) — 플레이스홀더 생성 완료
+6. 대시보드 리뉴얼
 
 **📋 Phase 2 계획 (정부지원사업 관리)**
 
@@ -51,6 +52,7 @@ npm start            # 프로덕션 서버 실행
 
 # 코드 품질
 npm run lint         # ESLint 9
+# 테스트: 미설정 (테스트 프레임워크 없음)
 
 # 데이터베이스
 npx prisma migrate dev           # DB 마이그레이션 생성 및 적용
@@ -77,7 +79,7 @@ npx prisma generate              # Prisma Client 재생성
 ```
 프로젝트 루트/
 ├── prisma/
-│   ├── schema.prisma           # DB 스키마 (7개 모델)
+│   ├── schema.prisma           # DB 스키마 (10개 모델)
 │   ├── seed.ts                 # 시드 데이터 (관리자+부서+직원+경비+근무스케줄)
 │   └── migrations/             # 마이그레이션 파일
 ├── src/
@@ -97,7 +99,7 @@ npx prisma generate              # Prisma Client 재생성
 │   │   └── expense-actions.ts  # 경비 CRUD
 │   ├── components/
 │   │   ├── layout/             # 레이아웃 컴포넌트 (Sidebar, nav-items.ts)
-│   │   ├── ui/                 # shadcn/ui 컴포넌트 (19개)
+│   │   ├── ui/                 # shadcn/ui 컴포넌트 (21개)
 │   │   ├── shared/             # 공유 컴포넌트 (PageHeader, StatCard 등)
 │   │   ├── employees/          # 직원 컴포넌트 (8개: 테이블, 상세헤더, 4탭, 추가/수정 Dialog)
 │   │   └── expenses/           # 경비 컴포넌트 (폼, 내역 테이블)
@@ -214,8 +216,13 @@ employees/[id]/page.tsx (Server Component, DB 조회)
 - `src/lib/auth.ts`: Auth.js v5 설정 (Credentials + PrismaAdapter + JWT)
 - `src/lib/safe-action.ts`: next-safe-action 클라이언트 (actionClient, authActionClient)
 - `src/lib/leave-calculator.ts`: 연차 계산 순수 함수 (근로기준법 제60조 기반, 입사일 기준)
-- `src/lib/salary-calculator.ts`: 통상시급, 4대보험 공제액 계산, `formatCurrency()` 포매팅
-- `src/lib/validations/salary.ts`: 최저임금 검증 함수
+- `src/lib/salary-calculator.ts`: 급여 계산 함수 (Phase 1-B 리팩토링)
+  - `calculateTotalGross()`: 총 급여 (기본급+수당)
+  - `calculateTaxableAmount()`: 과세 대상 (비과세 제외)
+  - `calculateMonthlyInsurance()`: 4대보험료 (과세 대상 기준)
+  - `calculateIncomeTax()`: 소득세 (간이세액표 간단 버전)
+  - `calculateSalary()`: 종합 계산 → 실수령액
+- `src/lib/validations/salary.ts`: 최저임금 검증 (모든 수당 포함, 고정OT 제외)
 
 ## 핵심 규칙 및 코딩 컨벤션
 
@@ -253,6 +260,11 @@ employees/[id]/page.tsx (Server Component, DB 조회)
   - 유연근무 설정: workType, flexStartTime, remoteWorkDays(JSON)
   - 휴직 상태: status, leaveType, leaveStartDate, leaveEndDate
   - 주소: `address` (선택), 자녀세액공제용: `childrenUnder20` (기본 0)
+  - **급여 구조 (Phase 1-B)**: 기본급 + 수당 분리
+    - 기본급: `baseSalary`
+    - 수당: `mealAllowance`, `transportAllowance`, `positionAllowance`
+    - 비과세: `taxFreeMeal`, `taxFreeTransport` (각 20만원까지)
+    - 고정OT: `useFixedOT`, `fixedOTHours`, `fixedOTAmount` 등 7개 필드
 
 ### 근태 및 휴가
 - **WorkSchedule**: 요일별 근무시간 스케줄 (시차출퇴근 지원, effectiveFrom/To로 이력 관리)
@@ -309,15 +321,37 @@ NEXT_PUBLIC_APP_NAME=사내 자동화 도구       # 앱 이름 (UI에 표시)
 - 평균임금 < 통상임금인 경우 → 통상임금 적용
 - 계속근로기간 1년 이상 시 지급 의무
 
+### 급여 계산 규칙 (Phase 1-B)
+- **총 급여**: 기본급 + 식대 + 교통비 + 직책수당
+- **과세 대상**: 총 급여 - 비과세 수당 (식대 20만, 교통비 20만)
+- **최저임금 검증**: 총 급여 / 209시간 ≥ 10,320원 (고정OT 제외)
+- **4대보험료**: 과세 대상 급여로 계산
+- **실수령액**: 총 급여 - (4대보험 + 소득세 + 지방소득세)
+
 ### 개발 시 유의사항
 - 4대보험 요율은 매년 변경되므로 `constants.ts`의 연도 확인 필수
 - 출산휴가/육아휴직은 자녀 출생일 기준으로 자동 계산
 - 대체인력 지원금 신청을 위해 `replacementForId`, `replacementReason` 필드 정확히 관리
 - 근태 기록(`AttendanceRecord`)은 정부 지원금 증빙 자료이므로 `isConfirmed` 필드로 관리자 확인 필수
+- **급여 수당**: 비과세 한도 초과분은 과세 대상으로 자동 전환
+- **고정OT**: 최저임금 검증 시 제외, 서면 합의 필수, 법정 최소 금액 준수
 
 ## 서브에이전트 시스템
 
 16개 전문가 에이전트가 `.claude/agents/`에 정의되어 있다. 에이전트는 **자문관/검토자** 역할이며, 코드 작성은 메인이 직접 수행한다.
+
+### 호출 방식 (검증 완료 2026-02-09)
+
+커스텀 에이전트는 Task 도구의 `subagent_type`으로 직접 호출할 수 없다. 대신 다음 방식을 사용:
+
+| 방식 | 설명 | 예시 |
+|------|------|------|
+| **내장 code-reviewer** | Task의 `subagent_type: "code-reviewer"`로 호출 가능. 커스텀 프롬프트가 병합 적용됨 | 구현 완료 후 코드 리뷰 시 사용 |
+| **general-purpose + 역할 프롬프트** | Task의 `subagent_type: "general-purpose"`에 에이전트 역할을 프롬프트로 주입 | DB 설계, 노무 자문 등 전문 분석 시 |
+| **CLI 에이전트 모드** | `claude --agent <name>`으로 터미널에서 직접 실행 | 독립적인 깊은 분석 필요 시 |
+| **사용자 자연어 요청** | "code-reviewer 에이전트로 리뷰해줘" 형태로 요청 | 사용자가 특정 에이전트 지정 시 |
+
+**실용적 패턴**: 메인 세션에서는 `code-reviewer` (내장)과 `general-purpose` (역할 프롬프트 주입)를 활용하고, 에이전트 파일의 시스템 프롬프트와 체크리스트를 참조 문서로 활용한다.
 
 ### 에이전트 조직도
 
@@ -340,15 +374,17 @@ NEXT_PUBLIC_APP_NAME=사내 자동화 도구       # 앱 이름 (UI에 표시)
 | | qa-engineer | sonnet | 테스트 설계/작성 |
 | | technical-writer | haiku | 문서 정리, MEMORY 갱신 |
 
-### 검증 프로토콜
+### 검증 프로토콜 (실용적 대안)
 
-| 프로토콜 | 에이전트 | 실행 방식 | 사용 시점 |
-|---------|---------|----------|----------|
-| **P0 기획** | product-manager | 단독 | 새 기능 기획 시 |
-| **P1 설계 리뷰** | fullstack + db + ui-ux | 3개 병렬 | 아키텍처 결정 시 |
-| **P2 품질 게이트** | code-reviewer + security + devops + qa | 4개 병렬 | 구현 완료 후 |
-| **P3 교차검증** | hr → payroll → qa | 순차 | 급여/노무 정확성 필수 시 |
-| **P4 스키마 검증** | db → security + fullstack | 순차+병렬 | DB 스키마 변경 시 |
+원래 설계된 병렬/순차 프로토콜 대신, 실제 사용 가능한 패턴:
+
+| 프로토콜 | 실행 방법 | 사용 시점 |
+|---------|----------|----------|
+| **P0 기획** | general-purpose에 product-manager 역할 프롬프트 주입 | 새 기능 기획 시 |
+| **P1 설계 리뷰** | general-purpose 3개 병렬 (각각 architect/db/ui-ux 역할) | 아키텍처 결정 시 |
+| **P2 품질 게이트** | 내장 code-reviewer 호출 | 구현 완료 후 |
+| **P3 교차검증** | general-purpose에 hr→payroll 순차 역할 프롬프트 | 급여/노무 정확성 필수 시 |
+| **P4 스키마 검증** | general-purpose에 db-architect 역할 프롬프트 | DB 스키마 변경 시 |
 
 ### 비용 인식
 

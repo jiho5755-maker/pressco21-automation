@@ -36,7 +36,7 @@ function InfoRow({
 }
 
 export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
-  // 급여 계산
+  // 급여 계산 (고정OT 포함)
   const salaryResult = calculateSalary(
     {
       baseSalary: employee.baseSalary,
@@ -45,6 +45,10 @@ export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
       positionAllowance: employee.positionAllowance || 0,
       taxFreeMeal: employee.taxFreeMeal ?? true,
       taxFreeTransport: employee.taxFreeTransport ?? true,
+      useFixedOT: employee.useFixedOT || false,
+      fixedOTAmount: employee.fixedOTAmount || 0,
+      fixedNightWorkAmount: employee.fixedNightWorkAmount || 0,
+      fixedHolidayWorkAmount: employee.fixedHolidayWorkAmount || 0,
     },
     {
       nationalPension: employee.nationalPension,
@@ -101,6 +105,44 @@ export function EmployeeSalaryTab({ employee }: EmployeeSalaryTabProps) {
             label="직책수당"
             value={`${(employee.positionAllowance || 0).toLocaleString()}원`}
           />
+
+          {/* 고정OT (포괄임금제) */}
+          {employee.useFixedOT && (
+            <>
+              <div className="border-t pt-3 mt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    포괄임금제
+                  </Badge>
+                </div>
+              </div>
+
+              {salaryResult.fixedOTAmount > 0 && (
+                <InfoRow
+                  label={`고정 연장수당 (${employee.fixedOTHours || 0}시간)`}
+                  value={`${salaryResult.fixedOTAmount.toLocaleString()}원`}
+                  className="text-sm"
+                />
+              )}
+
+              {salaryResult.fixedNightWorkAmount > 0 && (
+                <InfoRow
+                  label={`고정 야간수당 (${employee.fixedNightWorkHours || 0}시간)`}
+                  value={`${salaryResult.fixedNightWorkAmount.toLocaleString()}원`}
+                  className="text-sm"
+                />
+              )}
+
+              {salaryResult.fixedHolidayWorkAmount > 0 && (
+                <InfoRow
+                  label={`고정 휴일수당 (${employee.fixedHolidayWorkHours || 0}시간)`}
+                  value={`${salaryResult.fixedHolidayWorkAmount.toLocaleString()}원`}
+                  className="text-sm"
+                />
+              )}
+            </>
+          )}
+
           <div className="border-t pt-3 mt-3">
             <InfoRow
               label="총 급여"
