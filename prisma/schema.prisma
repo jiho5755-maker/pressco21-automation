@@ -1,12 +1,12 @@
 // 소기업 경영 자동화 시스템 — DB 스키마
-// SQLite 기반, enum 미지원 → String + 앱레벨 검증
+// PostgreSQL 기반 (Vercel Postgres)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
