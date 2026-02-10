@@ -554,6 +554,7 @@ async function main() {
       category: "교통비",
       date: new Date("2025-01-15"),
       description: "강남역 → 판교 오피스 출장",
+      employeeId: employeeMap["EMP001"], // 김민수
       submitterId: admin.id,
       status: "APPROVED",
       approverId: admin.id,
@@ -565,6 +566,7 @@ async function main() {
       category: "식비",
       date: new Date("2025-01-20"),
       description: "개발팀 신년 회식",
+      employeeId: employeeMap["EMP001"], // 김민수
       submitterId: admin.id,
       status: "APPROVED",
       approverId: admin.id,
@@ -575,6 +577,7 @@ async function main() {
       amount: 450000,
       category: "사무용품",
       date: new Date("2025-02-01"),
+      employeeId: employeeMap["EMP002"], // 이서연
       submitterId: admin.id,
       status: "PENDING",
     },
@@ -584,6 +587,7 @@ async function main() {
       category: "교육비",
       date: new Date("2025-02-05"),
       description: "AWS Solutions Architect 자격증 교육",
+      employeeId: employeeMap["EMP001"], // 김민수
       submitterId: admin.id,
       status: "REJECTED",
       approverId: admin.id,
@@ -595,6 +599,7 @@ async function main() {
       category: "교통비",
       date: new Date("2025-02-08"),
       description: "부산 지사 미팅 출장",
+      employeeId: employeeMap["EMP003"], // 박지훈
       submitterId: admin.id,
       status: "PENDING",
     },
