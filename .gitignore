@@ -63,3 +63,4 @@ test-*.txt
 
 # Playwright MCP
 .playwright-mcp/
+.env*.local
