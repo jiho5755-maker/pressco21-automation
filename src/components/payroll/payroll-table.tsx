@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Trash2, FileDown } from "lucide-react";
+import { toast } from "sonner";
 import type { PayrollRecord, Employee, Department } from "@prisma/client";
 
 import {
@@ -17,6 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/salary-calculator";
+import { PayrollSlipPDF } from "./payroll-slip-pdf";
+import {
+  downloadPDF,
+  generatePayrollSlipFilename,
+} from "@/lib/pdf-download";
 
 type PayrollRecordWithEmployee = PayrollRecord & {
   employee: Employee & {
@@ -75,6 +81,58 @@ export function PayrollTable({
     }
   };
 
+  // PDF 다운로드 함수
+  const handleDownloadPDF = async (record: PayrollRecordWithEmployee) => {
+    try {
+      const filename = generatePayrollSlipFilename(
+        "급여명세서",
+        record.year,
+        record.month,
+        record.employee.name
+      );
+
+      await downloadPDF(<PayrollSlipPDF record={record} />, filename);
+      toast.success("급여명세서가 다운로드되었습니다.");
+    } catch (error) {
+      console.error("PDF 다운로드 실패:", error);
+      toast.error("급여명세서 다운로드에 실패했습니다.");
+    }
+  };
+
+  // 일괄 PDF 다운로드 함수
+  const handleDownloadSelectedPDFs = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("다운로드할 급여명세서를 선택해주세요.");
+      return;
+    }
+
+    const selectedRecords = records.filter((r) => selectedIds.includes(r.id));
+
+    try {
+      for (const record of selectedRecords) {
+        const filename = generatePayrollSlipFilename(
+          "급여명세서",
+          record.year,
+          record.month,
+          record.employee.name
+        );
+
+        await downloadPDF(<PayrollSlipPDF record={record} />, filename);
+
+        // 다운로드 간 약간의 딜레이 (브라우저 차단 방지)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      toast.success(
+        `${selectedRecords.length}건의 급여명세서가 다운로드되었습니다.`
+      );
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("일괄 PDF 다운로드 실패:", error);
+      toast.error("급여명세서 다운로드에 실패했습니다.");
+    }
+  };
+
   if (records.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -93,6 +151,14 @@ export function PayrollTable({
         <div className="flex items-center gap-2">
           <Button onClick={handleConfirmSelected} size="sm">
             선택 항목 확정 ({selectedIds.length}건)
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadSelectedPDFs}
+          >
+            <FileDown className="h-4 w-4 mr-1" />
+            명세서 일괄 출력 ({selectedIds.length}건)
           </Button>
           <Button
             variant="outline"
@@ -125,6 +191,7 @@ export function PayrollTable({
               <TableHead className="text-right">공제액</TableHead>
               <TableHead className="text-right">실수령액</TableHead>
               <TableHead className="text-center">확정</TableHead>
+              <TableHead className="text-center">명세서</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -170,6 +237,16 @@ export function PayrollTable({
                         미확정
                       </Badge>
                     )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadPDF(record)}
+                      title="급여명세서 다운로드"
+                    >
+                      <FileDown className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                   <TableCell>
                     {!record.isConfirmed && (
