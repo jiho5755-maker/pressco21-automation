@@ -36,7 +36,7 @@ Font.register({
 // Bold (제목/강조용)
 Font.register({
   family: "NotoSansKR",
-  src: "https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms1YQeOA-vvnIzzuoyeLQ.ttf",
+  src: "https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzg01eLQ.ttf",
   fontWeight: 700,
 });
 
