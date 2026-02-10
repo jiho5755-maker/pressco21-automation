@@ -308,6 +308,21 @@ async function main() {
     employeeMap[emp.employeeNo] = created.id;
   }
 
+  // ─── 직원-사용자 계정 연결 ───
+  // EMP005 (정우성, 개발팀 부장) → Manager 계정
+  await prisma.employee.update({
+    where: { employeeNo: "EMP005" },
+    data: { userId: manager.id },
+  });
+  console.log(`  ✓ Manager 계정 연결: EMP005 (정우성, 개발팀 부장)`);
+
+  // EMP007 (윤도현, 경영지원팀 과장) → Viewer 계정
+  await prisma.employee.update({
+    where: { employeeNo: "EMP007" },
+    data: { userId: viewer.id },
+  });
+  console.log(`  ✓ Viewer 계정 연결: EMP007 (윤도현, 경영지원팀 과장)`)
+
   // EMP011: 대체인력 (한예슬 대체)
   const emp011 = await prisma.employee.upsert({
     where: { employeeNo: "EMP011" },
@@ -413,8 +428,16 @@ async function main() {
 
   // 김민수 EMP001: 시차출퇴근 월~금 10:00-19:00
   for (let day = 1; day <= 5; day++) {
-    await prisma.workSchedule.create({
-      data: {
+    await prisma.workSchedule.upsert({
+      where: {
+        employeeId_dayOfWeek_effectiveFrom: {
+          employeeId: employeeMap["EMP001"],
+          dayOfWeek: day,
+          effectiveFrom,
+        },
+      },
+      update: {},
+      create: {
         employeeId: employeeMap["EMP001"],
         dayOfWeek: day,
         startTime: "10:00",
@@ -429,8 +452,16 @@ async function main() {
   // 이서연 EMP002: 재택(화,목), 사무실(월,수,금)
   for (let day = 1; day <= 5; day++) {
     const isRemote = day === 2 || day === 4;
-    await prisma.workSchedule.create({
-      data: {
+    await prisma.workSchedule.upsert({
+      where: {
+        employeeId_dayOfWeek_effectiveFrom: {
+          employeeId: employeeMap["EMP002"],
+          dayOfWeek: day,
+          effectiveFrom,
+        },
+      },
+      update: {},
+      create: {
         employeeId: employeeMap["EMP002"],
         dayOfWeek: day,
         startTime: "09:00",
@@ -444,8 +475,16 @@ async function main() {
 
   // 최수진 EMP004: 시차출퇴근 월~금 08:00-17:00
   for (let day = 1; day <= 5; day++) {
-    await prisma.workSchedule.create({
-      data: {
+    await prisma.workSchedule.upsert({
+      where: {
+        employeeId_dayOfWeek_effectiveFrom: {
+          employeeId: employeeMap["EMP004"],
+          dayOfWeek: day,
+          effectiveFrom,
+        },
+      },
+      update: {},
+      create: {
         employeeId: employeeMap["EMP004"],
         dayOfWeek: day,
         startTime: "08:00",
@@ -460,8 +499,16 @@ async function main() {
   // 정우성 EMP005: 하이브리드 (시차 10-19 + 재택 수)
   for (let day = 1; day <= 5; day++) {
     const isRemote = day === 3;
-    await prisma.workSchedule.create({
-      data: {
+    await prisma.workSchedule.upsert({
+      where: {
+        employeeId_dayOfWeek_effectiveFrom: {
+          employeeId: employeeMap["EMP005"],
+          dayOfWeek: day,
+          effectiveFrom,
+        },
+      },
+      update: {},
+      create: {
         employeeId: employeeMap["EMP005"],
         dayOfWeek: day,
         startTime: "10:00",
@@ -476,8 +523,16 @@ async function main() {
   // 강하늘 EMP008: 재택(월,금), 사무실(화,수,목)
   for (let day = 1; day <= 5; day++) {
     const isRemote = day === 1 || day === 5;
-    await prisma.workSchedule.create({
-      data: {
+    await prisma.workSchedule.upsert({
+      where: {
+        employeeId_dayOfWeek_effectiveFrom: {
+          employeeId: employeeMap["EMP008"],
+          dayOfWeek: day,
+          effectiveFrom,
+        },
+      },
+      update: {},
+      create: {
         employeeId: employeeMap["EMP008"],
         dayOfWeek: day,
         startTime: "09:00",
@@ -553,7 +608,7 @@ async function main() {
   // ─── 6. 휴가 기록 ───
   const leaveRecordsData = [
     {
-      employeeId: employees["EMP001"].id,
+      employeeId: employeeMap["EMP001"],
       type: "ANNUAL",
       startDate: new Date("2025-01-10"),
       endDate: new Date("2025-01-12"),
@@ -565,7 +620,7 @@ async function main() {
       reason: "가족 여행",
     },
     {
-      employeeId: employees["EMP002"].id,
+      employeeId: employeeMap["EMP002"],
       type: "ANNUAL",
       startDate: new Date("2026-02-15"),
       endDate: new Date("2026-02-15"),
@@ -575,7 +630,7 @@ async function main() {
       reason: "개인 사정",
     },
     {
-      employeeId: employees["EMP006"].id,
+      employeeId: employeeMap["EMP006"],
       type: "MATERNITY",
       startDate: new Date("2025-11-01"),
       endDate: new Date("2026-01-29"),
@@ -588,7 +643,7 @@ async function main() {
       reason: "출산휴가",
     },
     {
-      employeeId: employees["EMP003"].id,
+      employeeId: employeeMap["EMP003"],
       type: "ANNUAL",
       startDate: new Date("2026-01-20"),
       endDate: new Date("2026-01-20"),
@@ -601,7 +656,7 @@ async function main() {
       reason: "병원 진료",
     },
     {
-      employeeId: employees["EMP004"].id,
+      employeeId: employeeMap["EMP004"],
       type: "SICK",
       startDate: new Date("2026-02-01"),
       endDate: new Date("2026-02-03"),

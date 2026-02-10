@@ -30,6 +30,8 @@ model User {
   approvedExpenses  Expense[]     @relation("ExpenseApprover")
   approvedLeaves    LeaveRecord[] @relation("LeaveApprover")
 
+  employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -96,6 +98,10 @@ model Employee {
   name       String
   email      String?
   phone      String?
+
+  // ── 인증 계정 연결 (선택적, 1:1 관계) ──
+  userId String? @unique // 로그인 계정 ID (manager/viewer 역할 직원만 설정)
+  user   User?   @relation(fields: [userId], references: [id])
 
   // ── 인적사항 추가 ──
   address         String? // 주소
