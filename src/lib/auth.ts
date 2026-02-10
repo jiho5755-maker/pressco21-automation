@@ -53,12 +53,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     authorized({ auth, request }) {
+      const pathname = request.nextUrl.pathname;
+
       // 인증되지 않은 경우 false 반환 (로그인 페이지로 리다이렉트)
       if (!auth?.user) {
         return false;
       }
 
-      const pathname = request.nextUrl.pathname;
+      // 루트 경로 접근 시 대시보드로 리다이렉트
+      if (pathname === "/") {
+        return Response.redirect(new URL("/dashboard", request.nextUrl));
+      }
+
       const role = auth.user.role;
 
       // /employees: admin/manager만 허용

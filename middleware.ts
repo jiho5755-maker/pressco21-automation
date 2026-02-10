@@ -2,6 +2,9 @@
 export { auth as middleware } from "@/lib/auth";
 
 export const config = {
-  // 인증 체크가 필요 없는 경로를 제외
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
+  // 인증 체크가 필요한 모든 경로 포함
+  matcher: [
+    "/",
+    "/((?!api|_next/static|_next/image|favicon.ico|login).*)",
+  ],
 };
