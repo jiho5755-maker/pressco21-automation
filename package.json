@@ -48,6 +48,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.12",
     "jiti": "^2.6.1",
+    "playwright": "^1.58.2",
     "shadcn": "^3.8.4",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",

@@ -52,8 +52,14 @@ next-env.d.ts
 !.claude/agent-memory/
 .mcp.json
 
-# Screenshots
+# Screenshots & Images (루트 이미지 방지)
 *.png
+*.jpeg
+*.jpg
+
+# 임시 테스트 파일
+test-*.mjs
+test-*.txt
 
 # Playwright MCP
 .playwright-mcp/
