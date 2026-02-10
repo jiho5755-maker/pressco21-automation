@@ -3,8 +3,13 @@
 
 import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
-import { authActionClient, ActionError } from "@/lib/safe-action";
+import {
+  authActionClient,
+  managerActionClient,
+  ActionError,
+} from "@/lib/safe-action";
 import { prisma } from "@/lib/prisma";
+import { requireDataOwnership } from "@/lib/rbac-helpers";
 import {
   validateMaternityLeave,
   validateSpouseMaternityLeave,
@@ -70,6 +75,7 @@ const deleteLeaveSchema = z.object({
 
 // ─────────────────────────────────────────────
 // 휴가 신청
+// 권한: 본인만 신청 가능
 // ─────────────────────────────────────────────
 
 export const createLeaveRequest = authActionClient
@@ -85,6 +91,11 @@ export const createLeaveRequest = authActionClient
       childBirthDate,
       isMultiple = false,
     } = parsedInput;
+
+    // 권한 검증: 본인만 신청 가능 (Admin은 제외)
+    if (ctx.userRole !== "admin") {
+      await requireDataOwnership("employee", employeeId, ctx);
+    }
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -238,16 +249,17 @@ export const createLeaveRequest = authActionClient
 
 // ─────────────────────────────────────────────
 // 휴가 승인
+// 권한: Admin/Manager (Manager는 자기 부서만)
 // ─────────────────────────────────────────────
 
-export const approveLeaveRequest = authActionClient
+export const approveLeaveRequest = managerActionClient
   .inputSchema(approveLeaveSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id } = parsedInput;
 
-    // 권한 확인 (admin/manager만)
-    if (!["admin", "manager"].includes(ctx.userRole)) {
-      throw new ActionError("휴가 승인 권한이 없습니다.");
+    // Manager인 경우 부서 검증
+    if (ctx.userRole === "manager") {
+      await requireDataOwnership("leave", id, ctx);
     }
 
     // 1. 기존 기록 조회
@@ -307,16 +319,17 @@ export const approveLeaveRequest = authActionClient
 
 // ─────────────────────────────────────────────
 // 휴가 반려
+// 권한: Admin/Manager (Manager는 자기 부서만)
 // ─────────────────────────────────────────────
 
-export const rejectLeaveRequest = authActionClient
+export const rejectLeaveRequest = managerActionClient
   .inputSchema(rejectLeaveSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, rejectedReason } = parsedInput;
 
-    // 권한 확인
-    if (!["admin", "manager"].includes(ctx.userRole)) {
-      throw new ActionError("휴가 반려 권한이 없습니다.");
+    // Manager인 경우 부서 검증
+    if (ctx.userRole === "manager") {
+      await requireDataOwnership("leave", id, ctx);
     }
 
     // 1. 기존 기록 조회
@@ -361,6 +374,7 @@ export const rejectLeaveRequest = authActionClient
 
 // ─────────────────────────────────────────────
 // 휴가 삭제
+// 권한: 본인만 삭제 가능 (PENDING 상태만)
 // ─────────────────────────────────────────────
 
 export const deleteLeaveRecord = authActionClient
@@ -368,9 +382,9 @@ export const deleteLeaveRecord = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { id } = parsedInput;
 
-    // 권한 확인
-    if (!["admin", "manager"].includes(ctx.userRole)) {
-      throw new ActionError("휴가 삭제 권한이 없습니다.");
+    // 권한 검증: 본인만 삭제 가능 (Admin은 제외)
+    if (ctx.userRole !== "admin") {
+      await requireDataOwnership("leave", id, ctx);
     }
 
     // 1. 기존 기록 조회

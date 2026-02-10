@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
-import { authActionClient, ActionError } from "@/lib/safe-action";
+import {
+  authActionClient,
+  managerActionClient,
+  ActionError,
+} from "@/lib/safe-action";
 import { prisma } from "@/lib/prisma";
+import { requireDataOwnership } from "@/lib/rbac-helpers";
 import {
   calculateWorkMinutes,
   calculateOvertime,
@@ -55,12 +60,18 @@ const deleteAttendanceSchema = z.object({
 
 /**
  * 출퇴근 기록 생성
+ * 권한: 본인 기록만 생성 가능
  */
 export const createAttendanceRecord = authActionClient
   .inputSchema(createAttendanceSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
     const { employeeId, date, clockIn, clockOut, breakMinutes, workType, note } =
       parsedInput;
+
+    // 권한 검증: 본인 기록만 생성 가능 (Admin은 제외)
+    if (ctx.userRole !== "admin") {
+      await requireDataOwnership("employee", employeeId, ctx);
+    }
 
     // 1. 중복 체크 (동일 직원 + 동일 날짜)
     const dayStart = new Date(date);
@@ -136,10 +147,11 @@ export const createAttendanceRecord = authActionClient
 
 /**
  * 출퇴근 기록 수정
+ * 권한: 본인 기록만 수정 가능 (미확정 기록만)
  */
 export const updateAttendanceRecord = authActionClient
   .inputSchema(updateAttendanceSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
     const { id, employeeId, date, clockIn, clockOut, breakMinutes, workType, note } =
       parsedInput;
 
@@ -150,6 +162,11 @@ export const updateAttendanceRecord = authActionClient
 
     if (!existing) {
       throw new ActionError("해당 기록을 찾을 수 없습니다.");
+    }
+
+    // 권한 검증: 본인 기록만 수정 가능 (Admin은 제외)
+    if (ctx.userRole !== "admin") {
+      await requireDataOwnership("attendance", id, ctx);
     }
 
     // 2. 확정된 기록 수정 방지
@@ -214,10 +231,11 @@ export const updateAttendanceRecord = authActionClient
 
 /**
  * 출퇴근 기록 삭제
+ * 권한: 본인 기록만 삭제 가능 (미확정 기록만)
  */
 export const deleteAttendanceRecord = authActionClient
   .inputSchema(deleteAttendanceSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
     const { id } = parsedInput;
 
     // 1. 기존 기록 조회
@@ -227,6 +245,11 @@ export const deleteAttendanceRecord = authActionClient
 
     if (!existing) {
       throw new ActionError("해당 기록을 찾을 수 없습니다.");
+    }
+
+    // 권한 검증: 본인 기록만 삭제 가능 (Admin은 제외)
+    if (ctx.userRole !== "admin") {
+      await requireDataOwnership("attendance", id, ctx);
     }
 
     // 2. 확정된 기록 삭제 방지
@@ -250,15 +273,40 @@ export const deleteAttendanceRecord = authActionClient
 
 /**
  * 근태 기록 확정 (일괄)
+ * 권한: Admin/Manager (Manager는 자기 부서만)
  */
-export const confirmAttendanceRecords = authActionClient
+export const confirmAttendanceRecords = managerActionClient
   .inputSchema(confirmAttendanceSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { ids } = parsedInput;
 
-    // 관리자 권한 체크
-    if (ctx.userRole !== "admin") {
-      throw new ActionError("관리자만 근태 기록을 확정할 수 있습니다.");
+    // Manager인 경우 부서 검증
+    if (ctx.userRole === "manager") {
+      // 현재 사용자의 직원 정보 조회
+      const currentEmployee = await prisma.employee.findUnique({
+        where: { userId: ctx.userId },
+      });
+
+      if (!currentEmployee) {
+        throw new ActionError("직원 정보를 찾을 수 없습니다.");
+      }
+
+      // 확정하려는 기록들의 직원 조회
+      const records = await prisma.attendanceRecord.findMany({
+        where: { id: { in: ids } },
+        include: { employee: true },
+      });
+
+      // 모두 자기 부서 직원인지 확인
+      const invalidRecords = records.filter(
+        (r) => r.employee.departmentId !== currentEmployee.departmentId
+      );
+
+      if (invalidRecords.length > 0) {
+        throw new ActionError(
+          "다른 부서 직원의 근태 기록은 확정할 수 없습니다."
+        );
+      }
     }
 
     // 일괄 확정
@@ -281,15 +329,16 @@ export const confirmAttendanceRecords = authActionClient
 
 /**
  * 근태 기록 확정 해제
+ * 권한: Admin/Manager (Manager는 자기 부서만)
  */
-export const unconfirmAttendanceRecord = authActionClient
+export const unconfirmAttendanceRecord = managerActionClient
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput, ctx }) => {
     const { id } = parsedInput;
 
-    // 관리자 권한 체크
-    if (ctx.userRole !== "admin") {
-      throw new ActionError("관리자만 확정을 해제할 수 있습니다.");
+    // Manager인 경우 부서 검증
+    if (ctx.userRole === "manager") {
+      await requireDataOwnership("attendance", id, ctx);
     }
 
     await prisma.attendanceRecord.update({

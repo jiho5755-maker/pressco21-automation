@@ -4,8 +4,16 @@
 import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { authActionClient, ActionError } from "@/lib/safe-action";
-import { POSITIONS, FIXED_OT_LIMITS_2026, LABOR_STANDARDS_2026 } from "@/lib/constants";
+import {
+  authActionClient,
+  adminActionClient,
+  ActionError,
+} from "@/lib/safe-action";
+import {
+  POSITIONS,
+  FIXED_OT_LIMITS_2026,
+  LABOR_STANDARDS_2026,
+} from "@/lib/constants";
 import { validateMinimumWage } from "@/lib/validations/salary";
 
 // ── 직원 추가 스키마 ──
@@ -23,7 +31,7 @@ const createEmployeeSchema = z.object({
     .default("REGULAR"),
 });
 
-export const createEmployee = authActionClient
+export const createEmployee = adminActionClient
   .inputSchema(createEmployeeSchema)
   .action(async ({ parsedInput }) => {
     // 사번 자동생성: 마지막 사번 + 1
@@ -72,7 +80,7 @@ const updateEmployeeSchema = z.object({
   status: z.enum(["ACTIVE", "ON_LEAVE", "RESIGNED"]).optional(),
 });
 
-export const updateEmployee = authActionClient
+export const updateEmployee = adminActionClient
   .inputSchema(updateEmployeeSchema)
   .action(async ({ parsedInput: { id, ...data } }) => {
     const existing = await prisma.employee.findUnique({ where: { id } });
@@ -103,7 +111,7 @@ const bulkUpdateWorkTypeSchema = z.object({
     .optional(),
 });
 
-export const bulkUpdateWorkType = authActionClient
+export const bulkUpdateWorkType = adminActionClient
   .inputSchema(bulkUpdateWorkTypeSchema)
   .action(async ({ parsedInput }) => {
     const {
@@ -278,7 +286,7 @@ const updateEmployeeSalarySchema = z
     }
   });
 
-export const updateEmployeeSalary = authActionClient
+export const updateEmployeeSalary = adminActionClient
   .inputSchema(updateEmployeeSalarySchema)
   .action(async ({ parsedInput: { id, ...data } }) => {
     const existing = await prisma.employee.findUnique({ where: { id } });
@@ -319,7 +327,7 @@ const updateEmployeeWorkSchema = z.object({
   remoteWorkDays: z.array(z.enum(["MON", "TUE", "WED", "THU", "FRI"])).optional(),
 });
 
-export const updateEmployeeWork = authActionClient
+export const updateEmployeeWork = adminActionClient
   .inputSchema(updateEmployeeWorkSchema)
   .action(async ({ parsedInput: { id, ...data } }) => {
     const existing = await prisma.employee.findUnique({ where: { id } });

@@ -4,7 +4,11 @@
 import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { authActionClient, ActionError } from "@/lib/safe-action";
+import {
+  authActionClient,
+  managerActionClient,
+  ActionError,
+} from "@/lib/safe-action";
 import { EXPENSE_CATEGORIES } from "@/lib/constants";
 
 // ── 경비 신청 스키마 ──
@@ -56,15 +60,42 @@ const approveExpenseSchema = z.object({
   rejectReason: z.string().optional(),
 });
 
-export const approveExpense = authActionClient
+/**
+ * 경비 승인/반려
+ * 권한: Admin/Manager (Manager는 자기 부서 직원 경비만)
+ */
+export const approveExpense = managerActionClient
   .inputSchema(approveExpenseSchema)
   .action(async ({ parsedInput, ctx }) => {
     const existing = await prisma.expense.findUnique({
       where: { id: parsedInput.id },
+      include: { employee: true },
     });
     if (!existing) throw new ActionError("경비를 찾을 수 없습니다.");
     if (existing.status !== "PENDING") {
       throw new ActionError("이미 처리된 경비입니다.");
+    }
+
+    // Manager인 경우 부서 검증
+    if (ctx.userRole === "manager") {
+      // 직원이 연결되지 않은 경비는 Admin만 승인 가능
+      if (!existing.employeeId) {
+        throw new ActionError("직원이 연결되지 않은 경비는 관리자만 승인할 수 있습니다.");
+      }
+
+      // 현재 사용자의 직원 정보 조회
+      const currentEmployee = await prisma.employee.findUnique({
+        where: { userId: ctx.userId },
+      });
+
+      if (!currentEmployee) {
+        throw new ActionError("직원 정보를 찾을 수 없습니다.");
+      }
+
+      // 같은 부서인지 확인
+      if (existing.employee?.departmentId !== currentEmployee.departmentId) {
+        throw new ActionError("다른 부서 직원의 경비는 승인할 수 없습니다.");
+      }
     }
 
     const expense = await prisma.expense.update({
