@@ -677,6 +677,79 @@ async function main() {
   }
   console.log("  휴가 기록 5건 생성");
 
+  // ─── 7. 정부지원사업 신청 (Phase 2) ───
+  const subsidyApplicationsData = [
+    {
+      type: "FLEXIBLE_WORK",
+      year: 2026,
+      month: 1,
+      employeeId: employeeMap["EMP001"], // 유연근무 직원
+      requestedAmount: 600000,
+      approvedAmount: 600000,
+      flexibleWorkCount: 8,
+      status: "PAID",
+      submitterId: admin.id,
+      approverId: admin.id,
+      approvedAt: new Date("2026-02-01"),
+      paidAt: new Date("2026-02-05"),
+      paidBy: admin.id,
+    },
+    {
+      type: "REPLACEMENT_WORKER",
+      year: 2026,
+      month: 1,
+      employeeId: employeeMap["EMP006"], // 출산휴가 직원
+      replacementEmployeeId: employeeMap["EMP011"], // 대체인력
+      requestedAmount: 1400000,
+      approvedAmount: 1400000,
+      replacementStartDate: new Date("2025-11-01"),
+      status: "APPROVED",
+      submitterId: admin.id,
+      approverId: admin.id,
+      approvedAt: new Date("2026-02-01"),
+    },
+    {
+      type: "PARENTAL_LEAVE_GRANT",
+      year: 2026,
+      month: 2,
+      employeeId: employeeMap["EMP006"],
+      childBirthDate: new Date("2025-12-15"),
+      childAgeAtApplication: 2, // 2개월
+      requestedAmount: 1300000, // 월 30만 + 일시금 100만
+      status: "PENDING",
+      submitterId: admin.id,
+    },
+    {
+      type: "WORK_SHARING",
+      year: 2026,
+      month: 1,
+      employeeId: employeeMap["EMP008"], // 시간제 직원
+      requestedAmount: 600000,
+      status: "REJECTED",
+      rejectReason: "주 소정근로시간 40시간으로 단축 근무 아님",
+      submitterId: admin.id,
+      approverId: admin.id,
+      approvedAt: new Date("2026-01-25"),
+    },
+    {
+      type: "INFRA_SUPPORT",
+      year: 2026,
+      month: 1,
+      employeeId: employeeMap["EMP001"], // 회사 대표 명의로 신청
+      requestedAmount: 1800000,
+      approvedAmount: 1800000,
+      status: "APPROVED",
+      submitterId: admin.id,
+      approverId: admin.id,
+      approvedAt: new Date("2026-02-01"),
+    },
+  ];
+
+  for (const subsidy of subsidyApplicationsData) {
+    await prisma.subsidyApplication.create({ data: subsidy });
+  }
+  console.log("  정부지원사업 신청 5건 생성");
+
   console.log("시드 데이터 생성 완료!");
 }
 

@@ -62,6 +62,23 @@ export const EXPENSE_STATUS = {
   REJECTED: "반려",
 } as const;
 
+// ── 정부지원사업 유형 ──
+export const SUBSIDY_TYPES = {
+  FLEXIBLE_WORK: "유연근무 장려금",
+  REPLACEMENT_WORKER: "출산육아기 대체인력 지원금",
+  PARENTAL_LEAVE_GRANT: "육아휴직 부여 지원금",
+  WORK_SHARING: "업무분담 지원금",
+  INFRA_SUPPORT: "유연근무 인프라 구축비",
+} as const;
+
+// ── 정부지원사업 상태 ──
+export const SUBSIDY_STATUS = {
+  PENDING: "대기",
+  APPROVED: "승인",
+  REJECTED: "반려",
+  PAID: "지급완료",
+} as const;
+
 // ── 사용자 역할 ──
 export const USER_ROLES = {
   ADMIN: "admin",

@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Wallet,
   Receipt,
+  HandCoins,
   Settings,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
@@ -59,6 +60,12 @@ export const navGroups: NavGroup[] = [
         href: "/expenses",
         icon: Receipt,
         description: "경비 신청 및 내역 확인",
+      },
+      {
+        title: "정부지원사업",
+        href: "/subsidies",
+        icon: HandCoins,
+        description: "정부 지원금 신청 및 관리",
       },
     ],
   },

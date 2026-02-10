@@ -26,9 +26,11 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  submittedExpenses Expense[]     @relation("ExpenseSubmitter")
-  approvedExpenses  Expense[]     @relation("ExpenseApprover")
-  approvedLeaves    LeaveRecord[] @relation("LeaveApprover")
+  submittedExpenses  Expense[]             @relation("ExpenseSubmitter")
+  approvedExpenses   Expense[]             @relation("ExpenseApprover")
+  approvedLeaves     LeaveRecord[]         @relation("LeaveApprover")
+  submittedSubsidies SubsidyApplication[] @relation("SubsidySubmitter")
+  approvedSubsidies  SubsidyApplication[] @relation("SubsidyApprover")
 
   employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
 
@@ -104,6 +106,7 @@ model Employee {
   user   User?   @relation(fields: [userId], references: [id])
 
   // ── 인적사항 추가 ──
+  birthDate       DateTime? // 생년월일 (나이 기반 지원금 차등 적용용)
   address         String? // 주소
   childrenUnder20 Int     @default(0) // 20세 이하 자녀 수 (자녀세액공제 계산용)
 
@@ -178,11 +181,13 @@ model Employee {
   resignReason   String?
 
   // ── 관계 ──
-  expenses          Expense[]
-  attendanceRecords AttendanceRecord[]
-  leaveRecords      LeaveRecord[]
-  workSchedules     WorkSchedule[]
-  payrollRecords    PayrollRecord[]
+  expenses                   Expense[]
+  attendanceRecords          AttendanceRecord[]
+  leaveRecords               LeaveRecord[]
+  workSchedules              WorkSchedule[]
+  payrollRecords             PayrollRecord[]
+  subsidyApplications        SubsidyApplication[]
+  replacementWorkerSubsidies SubsidyApplication[] @relation("ReplacementWorker")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -378,4 +383,73 @@ model Expense {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// 정부지원사업 신청 (Phase 2)
+// ─────────────────────────────────────────────
+
+model SubsidyApplication {
+  id String @id @default(cuid())
+
+  // ── 신청 기본 정보 ──
+  type  String // "FLEXIBLE_WORK"|"REPLACEMENT_WORKER"|"PARENTAL_LEAVE_GRANT"|"WORK_SHARING"|"INFRA_SUPPORT"
+  year  Int // 귀속 연도 (예: 2026)
+  month Int // 귀속 월 (1~12)
+
+  // ── 신청 대상 직원 ──
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // ── 신청 금액 ──
+  requestedAmount Int // 신청 금액 (원)
+  approvedAmount  Int? // 승인된 금액 (원) — 실제 지급액
+
+  // ── 자격 검증 관련 필드 (유형별) ──
+  // 유연근무: 월 사용 횟수
+  flexibleWorkCount Int? // 해당 월 유연근무 사용 횟수 (최소 4회)
+
+  // 대체인력: 대체인력 정보
+  replacementEmployeeId String? // 대체인력 직원 ID
+  replacementEmployee   Employee? @relation("ReplacementWorker", fields: [replacementEmployeeId], references: [id], onDelete: SetNull)
+  replacementStartDate  DateTime? // 대체인력 근무 시작일
+  replacementEndDate    DateTime? // 대체인력 근무 종료일
+
+  // 육아휴직 부여: 자녀 정보
+  childBirthDate        DateTime? // 자녀 출생일
+  childAgeAtApplication Int? // 신청 시점 자녀 연령 (개월)
+
+  // ── 결재 상태 ──
+  status String @default("PENDING") // "PENDING"|"APPROVED"|"REJECTED"|"PAID"
+
+  // ── 신청자 ──
+  submitterId String
+  submitter   User     @relation("SubsidySubmitter", fields: [submitterId], references: [id])
+  submittedAt DateTime @default(now())
+
+  // ── 승인자 ──
+  approverId String?
+  approver   User?     @relation("SubsidyApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  approvedAt DateTime?
+
+  // ── 지급 정보 ──
+  paidAt DateTime? // 지급 완료 시각
+  paidBy String? // 지급 처리자 userId
+
+  // ── 반려 사유 ──
+  rejectReason String?
+
+  // ── 메모/비고 ──
+  note String?
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── 인덱스 ──
+  @@unique([employeeId, type, year, month]) // 중복 신청 방지
+  @@index([employeeId, year, month]) // 직원별 월별 조회
+  @@index([type, status]) // 유형별 상태 필터링
+  @@index([status, submittedAt]) // 대기 중인 신청 목록
+  @@index([year, month, status]) // 월별 통계
 }
