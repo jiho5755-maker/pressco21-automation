@@ -1,163 +1,201 @@
-// 급여명세서 PDF 템플릿 (@react-pdf/renderer)
+// 임금 명세서 PDF 템플릿 (고용노동부 표준 양식)
 import {
   Document,
   Page,
   Text,
   View,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
 import type { PayrollRecord, Employee, Department } from "@prisma/client";
 
-// 한글 폰트 등록
-// TODO: CDN 폰트 로딩이 불안정하여 현재 기본 폰트 사용
-// 개선 방안: /public/fonts/ 폴더에 로컬 TTF 파일 추가 후
-// Font.register({ family: "NotoSansKR", src: "/fonts/NotoSansKR-Regular.ttf" })
-// 참고: @react-pdf/renderer는 TTF 형식 권장, OTF/WOFF는 호환성 이슈 있음
+// 한글 폰트 등록 (로컬 TTF 파일)
+Font.register({
+  family: "NotoSansKR",
+  src: "/fonts/NotoSansKR-Regular.ttf",
+});
 
-// PDF 스타일
+// PDF 스타일 (고용노동부 표준 양식)
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontFamily: "Helvetica", // PDF 기본 폰트 (한글 폰트는 로컬 파일로 추가 필요)
-    fontSize: 10,
+    padding: 30,
+    fontFamily: "NotoSansKR",
+    fontSize: 9,
+    lineHeight: 1.4,
   },
-  header: {
-    marginBottom: 20,
-    borderBottom: "2pt solid #000",
-    paddingBottom: 10,
-  },
+  // 제목
   title: {
     fontSize: 18,
     fontWeight: 700,
     textAlign: "center",
-    marginBottom: 5,
+    marginBottom: 20,
   },
-  subtitle: {
-    fontSize: 11,
-    textAlign: "center",
-    color: "#666",
+  // 직원 정보 테이블
+  employeeInfoTable: {
+    marginBottom: 15,
+    border: "1pt solid #000",
   },
-  companyInfo: {
-    marginTop: 10,
-    fontSize: 9,
-    color: "#666",
+  employeeInfoRow: {
+    flexDirection: "row",
+    borderBottom: "1pt solid #000",
   },
-  section: {
-    marginTop: 15,
+  employeeInfoRowLast: {
+    flexDirection: "row",
   },
+  employeeInfoCell: {
+    flex: 1,
+    flexDirection: "row",
+    borderRight: "1pt solid #000",
+  },
+  employeeInfoCellLast: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  employeeInfoLabel: {
+    width: "35%",
+    padding: 5,
+    backgroundColor: "#f0f0f0",
+    borderRight: "1pt solid #000",
+    fontSize: 8,
+  },
+  employeeInfoValue: {
+    width: "65%",
+    padding: 5,
+    fontSize: 8,
+  },
+  // 상세 내역 섹션
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
+    marginTop: 15,
     marginBottom: 8,
     paddingBottom: 3,
-    borderBottom: "1pt solid #ccc",
+    borderBottom: "1pt solid #000",
   },
-  infoRow: {
+  // 2단 레이아웃 (지급/공제)
+  twoColumnContainer: {
     flexDirection: "row",
-    marginBottom: 5,
+    gap: 10,
   },
-  infoLabel: {
-    width: "30%",
-    color: "#666",
+  column: {
+    flex: 1,
+    border: "1pt solid #000",
   },
-  infoValue: {
-    width: "70%",
-    fontWeight: 700,
-  },
-  table: {
-    marginTop: 5,
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottom: "1pt solid #eee",
-    paddingVertical: 5,
-  },
-  tableRowLast: {
-    flexDirection: "row",
-    paddingVertical: 5,
-  },
-  tableLabel: {
-    width: "50%",
-    paddingLeft: 5,
-  },
-  tableValue: {
-    width: "50%",
-    textAlign: "right",
-    paddingRight: 5,
-  },
-  tableLabelIndent: {
-    width: "50%",
-    paddingLeft: 15,
+  columnHeader: {
+    padding: 5,
+    backgroundColor: "#e0e0e0",
+    borderBottom: "1pt solid #000",
     fontSize: 9,
-    color: "#666",
-  },
-  tableLabelBold: {
-    width: "50%",
-    paddingLeft: 5,
     fontWeight: 700,
+    textAlign: "center",
   },
-  tableValueBold: {
-    width: "50%",
+  columnRow: {
+    flexDirection: "row",
+    borderBottom: "1pt solid #e0e0e0",
+    minHeight: 20,
+  },
+  columnRowLast: {
+    flexDirection: "row",
+    minHeight: 20,
+  },
+  columnLabel: {
+    flex: 1,
+    padding: 4,
+    fontSize: 8,
+    borderRight: "1pt solid #e0e0e0",
+  },
+  columnLabelIndent: {
+    flex: 1,
+    paddingLeft: 12,
+    paddingTop: 4,
+    paddingBottom: 4,
+    fontSize: 7,
+    color: "#666",
+    borderRight: "1pt solid #e0e0e0",
+  },
+  columnValue: {
+    width: "40%",
+    padding: 4,
+    fontSize: 8,
     textAlign: "right",
-    paddingRight: 5,
-    fontWeight: 700,
   },
-  totalSection: {
-    marginTop: 20,
-    padding: 15,
+  columnTotal: {
+    flexDirection: "row",
     backgroundColor: "#f5f5f5",
-    borderRadius: 5,
   },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  totalLabel: {
-    fontSize: 11,
-    color: "#666",
-  },
-  totalValue: {
-    fontSize: 11,
+  columnTotalLabel: {
+    flex: 1,
+    padding: 4,
+    fontSize: 8,
     fontWeight: 700,
+    borderRight: "1pt solid #e0e0e0",
   },
-  netSalaryRow: {
+  columnTotalValue: {
+    width: "40%",
+    padding: 4,
+    fontSize: 8,
+    fontWeight: 700,
+    textAlign: "right",
+  },
+  // 실수령액 (노란 배경)
+  netSalaryContainer: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: "#fff5cc",
+    border: "2pt solid #000",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    paddingTop: 10,
-    borderTop: "2pt solid #000",
+    alignItems: "center",
   },
   netSalaryLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 700,
   },
   netSalaryValue: {
     fontSize: 14,
     fontWeight: 700,
-    color: "#2563eb",
   },
-  footer: {
-    marginTop: 30,
-    paddingTop: 15,
-    borderTop: "1pt solid #ccc",
+  // 계산 방법 섹션
+  calculationSection: {
+    marginTop: 20,
+  },
+  calculationRow: {
+    flexDirection: "row",
+    marginBottom: 5,
+  },
+  calculationLabel: {
+    width: "25%",
     fontSize: 8,
+    color: "#666",
+  },
+  calculationFormula: {
+    width: "75%",
+    fontSize: 8,
+    color: "#333",
+  },
+  // 주의사항
+  note: {
+    marginTop: 15,
+    padding: 8,
+    backgroundColor: "#f9f9f9",
+    border: "1pt solid #ccc",
+    fontSize: 7,
+    color: "#666",
+  },
+  // 푸터
+  footer: {
+    marginTop: 20,
+    paddingTop: 10,
+    borderTop: "1pt solid #ccc",
+    fontSize: 7,
     color: "#999",
     textAlign: "center",
-  },
-  note: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#fffbeb",
-    borderLeft: "3pt solid #f59e0b",
-    fontSize: 8,
-    color: "#92400e",
   },
 });
 
 // 금액 포맷팅
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString("ko-KR") + "원";
+  return amount.toLocaleString("ko-KR");
 }
 
 interface PayrollSlipPDFProps {
@@ -185,112 +223,142 @@ export function PayrollSlipPDF({
   const taxFreeTransportAmount = record.taxFreeTransport
     ? Math.min(record.transportAllowance, 200000)
     : 0;
+  const totalTaxFree = taxFreeMealAmount + taxFreeTransportAmount;
+
+  // 과세 대상 계산
+  const taxableGross = record.totalGross - totalTaxFree;
+
+  // 공제 합계
+  const totalDeduction =
+    record.totalInsurance + record.incomeTax + record.localIncomeTax;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.title}>급여 명세서</Text>
-          <Text style={styles.subtitle}>{yearMonth} 귀속</Text>
-          <View style={styles.companyInfo}>
-            <Text>{companyName}</Text>
-            <Text>사업자등록번호: {businessNumber}</Text>
+        {/* 제목 */}
+        <Text style={styles.title}>임금 명세서</Text>
+
+        {/* 1. 직원 정보 (2행 × 3셀) */}
+        <View style={styles.employeeInfoTable}>
+          {/* 첫째 행 */}
+          <View style={styles.employeeInfoRow}>
+            <View style={styles.employeeInfoCell}>
+              <Text style={styles.employeeInfoLabel}>성명</Text>
+              <Text style={styles.employeeInfoValue}>{employee.name}</Text>
+            </View>
+            <View style={styles.employeeInfoCell}>
+              <Text style={styles.employeeInfoLabel}>사번</Text>
+              <Text style={styles.employeeInfoValue}>
+                {employee.employeeNo}
+              </Text>
+            </View>
+            <View style={styles.employeeInfoCellLast}>
+              <Text style={styles.employeeInfoLabel}>부서</Text>
+              <Text style={styles.employeeInfoValue}>
+                {employee.department.name}
+              </Text>
+            </View>
+          </View>
+
+          {/* 둘째 행 */}
+          <View style={styles.employeeInfoRowLast}>
+            <View style={styles.employeeInfoCell}>
+              <Text style={styles.employeeInfoLabel}>직급</Text>
+              <Text style={styles.employeeInfoValue}>{employee.position}</Text>
+            </View>
+            <View style={styles.employeeInfoCell}>
+              <Text style={styles.employeeInfoLabel}>귀속년월</Text>
+              <Text style={styles.employeeInfoValue}>{yearMonth}</Text>
+            </View>
+            <View style={styles.employeeInfoCellLast}>
+              <Text style={styles.employeeInfoLabel}>지급일</Text>
+              <Text style={styles.employeeInfoValue}>
+                {yearMonth} 말일 (추정)
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* 직원 정보 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>직원 정보</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>사번</Text>
-            <Text style={styles.infoValue}>{employee.employeeNo}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>성명</Text>
-            <Text style={styles.infoValue}>{employee.name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>부서</Text>
-            <Text style={styles.infoValue}>{employee.department.name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>직급</Text>
-            <Text style={styles.infoValue}>{employee.position}</Text>
-          </View>
-        </View>
+        {/* 상세 내역 제목 */}
+        <Text style={styles.sectionTitle}>상세 내역</Text>
 
-        {/* 급여 내역 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>급여 내역</Text>
-          <View style={styles.table}>
+        {/* 2단 레이아웃: 지급 내역 | 공제 내역 */}
+        <View style={styles.twoColumnContainer}>
+          {/* 왼쪽: 지급 내역 */}
+          <View style={styles.column}>
+            <Text style={styles.columnHeader}>지급 내역</Text>
+
             {/* 기본급 */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>기본급</Text>
-              <Text style={styles.tableValue}>
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabel}>기본급</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.baseSalary)}
               </Text>
             </View>
 
-            {/* 수당 */}
+            {/* 식대 */}
             {record.mealAllowance > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>
                   식대 {record.taxFreeMeal && "(비과세)"}
                 </Text>
-                <Text style={styles.tableValue}>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.mealAllowance)}
                 </Text>
               </View>
             )}
+
+            {/* 교통비 */}
             {record.transportAllowance > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>
                   교통비 {record.taxFreeTransport && "(비과세)"}
                 </Text>
-                <Text style={styles.tableValue}>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.transportAllowance)}
                 </Text>
               </View>
             )}
+
+            {/* 직책수당 */}
             {record.positionAllowance > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>직책수당</Text>
-                <Text style={styles.tableValue}>
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>직책수당</Text>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.positionAllowance)}
                 </Text>
               </View>
             )}
 
-            {/* 고정OT (포괄임금제) */}
+            {/* 고정OT (포괄임금) */}
             {record.useFixedOT && (
               <>
                 {record.fixedOTAmount > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabelIndent}>
-                      고정 연장수당 (포괄임금)
+                  <View style={styles.columnRow}>
+                    <Text style={styles.columnLabelIndent}>
+                      고정 연장수당
                     </Text>
-                    <Text style={styles.tableValue}>
+                    <Text style={styles.columnValue}>
                       {formatCurrency(record.fixedOTAmount)}
                     </Text>
                   </View>
                 )}
                 {record.fixedNightWorkAmount > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabelIndent}>
-                      고정 야간수당 (포괄임금)
+                  <View style={styles.columnRow}>
+                    <Text style={styles.columnLabelIndent}>
+                      고정 야간수당
                     </Text>
-                    <Text style={styles.tableValue}>
+                    <Text style={styles.columnValue}>
                       {formatCurrency(record.fixedNightWorkAmount)}
                     </Text>
                   </View>
                 )}
                 {record.fixedHolidayWorkAmount > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabelIndent}>
-                      고정 휴일수당 (포괄임금)
+                  <View style={styles.columnRow}>
+                    <Text style={styles.columnLabelIndent}>
+                      고정 휴일수당
                     </Text>
-                    <Text style={styles.tableValue}>
+                    <Text style={styles.columnValue}>
                       {formatCurrency(record.fixedHolidayWorkAmount)}
                     </Text>
                   </View>
@@ -300,128 +368,189 @@ export function PayrollSlipPDF({
 
             {/* 변동 수당 (근태 기반) */}
             {record.variableOvertimeAmount > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>
-                  연장수당 ({Math.floor(record.variableOvertimeMinutes / 60)}시간)
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>
+                  연장수당 ({Math.floor(record.variableOvertimeMinutes / 60)}h)
                 </Text>
-                <Text style={styles.tableValue}>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.variableOvertimeAmount)}
                 </Text>
               </View>
             )}
             {record.variableNightWorkAmount > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>
-                  야간수당 ({Math.floor(record.variableNightWorkMinutes / 60)}시간)
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>
+                  야간수당 ({Math.floor(record.variableNightWorkMinutes / 60)}
+                  h)
                 </Text>
-                <Text style={styles.tableValue}>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.variableNightWorkAmount)}
                 </Text>
               </View>
             )}
             {record.variableHolidayWorkAmount > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableLabelIndent}>
-                  휴일수당 ({Math.floor(record.variableHolidayMinutes / 60)}시간)
+              <View style={styles.columnRow}>
+                <Text style={styles.columnLabelIndent}>
+                  휴일수당 ({Math.floor(record.variableHolidayMinutes / 60)}h)
                 </Text>
-                <Text style={styles.tableValue}>
+                <Text style={styles.columnValue}>
                   {formatCurrency(record.variableHolidayWorkAmount)}
                 </Text>
               </View>
             )}
 
-            {/* 총 지급액 */}
-            <View style={styles.tableRowLast}>
-              <Text style={styles.tableLabelBold}>총 지급액</Text>
-              <Text style={styles.tableValueBold}>
+            {/* 지급 총액 */}
+            <View style={styles.columnTotal}>
+              <Text style={styles.columnTotalLabel}>지급 총액</Text>
+              <Text style={styles.columnTotalValue}>
                 {formatCurrency(record.totalGross)}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* 공제 내역 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>공제 내역</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>국민연금</Text>
-              <Text style={styles.tableValue}>
+          {/* 오른쪽: 공제 내역 */}
+          <View style={styles.column}>
+            <Text style={styles.columnHeader}>공제 내역</Text>
+
+            {/* 국민연금 */}
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabel}>국민연금</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.nationalPension)}
               </Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>건강보험</Text>
-              <Text style={styles.tableValue}>
+
+            {/* 건강보험 */}
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabel}>건강보험</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.healthInsurance)}
               </Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabelIndent}>장기요양보험</Text>
-              <Text style={styles.tableValue}>
+
+            {/* 장기요양보험 */}
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabelIndent}>장기요양보험</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.longTermCare)}
               </Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>고용보험</Text>
-              <Text style={styles.tableValue}>
+
+            {/* 고용보험 */}
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabel}>고용보험</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.employmentInsurance)}
               </Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>소득세</Text>
-              <Text style={styles.tableValue}>
+
+            {/* 소득세 */}
+            <View style={styles.columnRow}>
+              <Text style={styles.columnLabel}>소득세</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.incomeTax)}
               </Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableLabelIndent}>지방소득세</Text>
-              <Text style={styles.tableValue}>
+
+            {/* 지방소득세 */}
+            <View style={styles.columnRowLast}>
+              <Text style={styles.columnLabelIndent}>지방소득세</Text>
+              <Text style={styles.columnValue}>
                 {formatCurrency(record.localIncomeTax)}
               </Text>
             </View>
-            <View style={styles.tableRowLast}>
-              <Text style={styles.tableLabelBold}>총 공제액</Text>
-              <Text style={styles.tableValueBold}>
-                {formatCurrency(
-                  record.totalInsurance + record.incomeTax + record.localIncomeTax
-                )}
+
+            {/* 공제 총액 */}
+            <View style={styles.columnTotal}>
+              <Text style={styles.columnTotalLabel}>공제 총액</Text>
+              <Text style={styles.columnTotalValue}>
+                {formatCurrency(totalDeduction)}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* 실수령액 */}
-        <View style={styles.totalSection}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>총 지급액</Text>
-            <Text style={styles.totalValue}>
-              {formatCurrency(record.totalGross)}
+        {/* 실수령액 (노란 배경) */}
+        <View style={styles.netSalaryContainer}>
+          <Text style={styles.netSalaryLabel}>실수령액</Text>
+          <Text style={styles.netSalaryValue}>
+            {formatCurrency(record.netSalary)}원
+          </Text>
+        </View>
+
+        {/* 2. 계산 방법 (고용노동부 표준) */}
+        <View style={styles.calculationSection}>
+          <Text style={styles.sectionTitle}>2. 계산 방법</Text>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>과세 대상</Text>
+            <Text style={styles.calculationFormula}>
+              지급 총액 {formatCurrency(record.totalGross)} - 비과세{" "}
+              {formatCurrency(totalTaxFree)} = {formatCurrency(taxableGross)}원
             </Text>
           </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>총 공제액</Text>
-            <Text style={styles.totalValue}>
-              -{" "}
-              {formatCurrency(
-                record.totalInsurance + record.incomeTax + record.localIncomeTax
-              )}
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>국민연금</Text>
+            <Text style={styles.calculationFormula}>
+              과세 대상 × 4.75% (상한 637만원) ={" "}
+              {formatCurrency(record.nationalPension)}원
             </Text>
           </View>
-          <View style={styles.netSalaryRow}>
-            <Text style={styles.netSalaryLabel}>실수령액</Text>
-            <Text style={styles.netSalaryValue}>
-              {formatCurrency(record.netSalary)}
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>건강보험</Text>
+            <Text style={styles.calculationFormula}>
+              과세 대상 × 3.595% (상한 1,270만원) ={" "}
+              {formatCurrency(record.healthInsurance)}원
+            </Text>
+          </View>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>장기요양보험</Text>
+            <Text style={styles.calculationFormula}>
+              건강보험료 × 13.14% = {formatCurrency(record.longTermCare)}원
+            </Text>
+          </View>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>고용보험</Text>
+            <Text style={styles.calculationFormula}>
+              과세 대상 × 0.9% = {formatCurrency(record.employmentInsurance)}원
+            </Text>
+          </View>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>소득세</Text>
+            <Text style={styles.calculationFormula}>
+              간이세액표 적용 (부양가족 {employee.childrenUnder20}명) ={" "}
+              {formatCurrency(record.incomeTax)}원
+            </Text>
+          </View>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>지방소득세</Text>
+            <Text style={styles.calculationFormula}>
+              소득세 × 10% = {formatCurrency(record.localIncomeTax)}원
+            </Text>
+          </View>
+
+          <View style={styles.calculationRow}>
+            <Text style={styles.calculationLabel}>실수령액</Text>
+            <Text style={styles.calculationFormula}>
+              지급 총액 {formatCurrency(record.totalGross)} - 공제 총액{" "}
+              {formatCurrency(totalDeduction)} = {formatCurrency(record.netSalary)}
+              원
             </Text>
           </View>
         </View>
 
         {/* 비과세 안내 */}
-        {(taxFreeMealAmount > 0 || taxFreeTransportAmount > 0) && (
+        {totalTaxFree > 0 && (
           <View style={styles.note}>
             <Text>
-              ※ 비과세 한도: 식대 {formatCurrency(taxFreeMealAmount)}, 교통비{" "}
-              {formatCurrency(taxFreeTransportAmount)}
+              ※ 비과세 한도: 식대 월 20만원, 교통비 월 20만원 (소득세법 시행령
+              제12조)
             </Text>
           </View>
         )}
@@ -439,11 +568,13 @@ export function PayrollSlipPDF({
         {/* 푸터 */}
         <View style={styles.footer}>
           <Text>
-            본 명세서는 {yearMonth} 귀속 급여 내역입니다. 문의사항은
-            인사팀으로 연락주시기 바랍니다.
+            {companyName} (사업자등록번호: {businessNumber})
           </Text>
-          <Text style={{ marginTop: 5 }}>
-            발행일: {new Date().toLocaleDateString("ko-KR")}
+          <Text style={{ marginTop: 3 }}>
+            발행일: {new Date().toLocaleDateString("ko-KR")} | 문의: 인사팀
+          </Text>
+          <Text style={{ marginTop: 3 }}>
+            ※ 본 명세서는 근로기준법 제48조에 따른 임금명세서입니다.
           </Text>
         </View>
       </Page>
