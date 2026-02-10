@@ -235,8 +235,8 @@ interface PayrollSlipPDFProps {
 
 export function PayrollSlipPDF({
   record,
-  companyName = "주식회사 프레스코21",
-  businessNumber = "000-00-00000",
+  companyName = "프레스코21",
+  businessNumber = "215-05-52221",
 }: PayrollSlipPDFProps) {
   const { employee } = record;
   const yearMonth = `${record.year}년 ${record.month}월`;
