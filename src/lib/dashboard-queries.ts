@@ -2,8 +2,15 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek } from "date-fns";
+import {
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+} from "date-fns";
 import { getAnnualLeaveSummary } from "@/lib/leave-calculator";
+import type { DataScope } from "@/lib/rbac-helpers";
 
 /**
  * 월별 출근율 계산
@@ -131,7 +138,7 @@ export async function calculateMonthlyTotalPayroll(
 export async function calculatePendingApprovals(
   userId: string,
   role: string
-): Promise<{ expense: number; leave: number; total: number }> {
+): Promise<{ expenses: number; leaves: number; total: number }> {
   // 경비 미승인
   const pendingExpenseCount = await prisma.expense.count({
     where: { status: "PENDING" },
@@ -146,16 +153,75 @@ export async function calculatePendingApprovals(
       : 0;
 
   return {
-    expense: pendingExpenseCount,
-    leave: pendingLeaveCount,
+    expenses: pendingExpenseCount,
+    leaves: pendingLeaveCount,
     total: pendingExpenseCount + pendingLeaveCount,
   };
 }
 
 /**
  * 핵심 통계 데이터 조회 (6개 카드용)
+ * @param scope 데이터 범위 (all/department/self)
+ * @param employeeFilter 직원 필터 (scope에 따라)
  */
-export async function fetchCoreStats(year: number, month: number, userId: string, role: string) {
+export async function fetchCoreStats(
+  year: number,
+  month: number,
+  userId: string,
+  role: string,
+  scope: DataScope = "all",
+  employeeFilter?: { id?: string; departmentId?: string }
+) {
+  // scope가 "self"인 경우, 개인 통계만 반환
+  if (scope === "self" && employeeFilter?.id) {
+    const currentEmployee = await prisma.employee.findUnique({
+      where: { id: employeeFilter.id },
+    });
+
+    if (!currentEmployee) {
+      return {
+        activeCount: 0,
+        onLeaveCount: 0,
+        flexWorkCount: 0,
+        totalEmployees: 0,
+        attendanceRate: 0,
+        avgLeaveBalance: 0,
+        weeklyOvertime: 0,
+        monthlyPayroll: 0,
+        pendingApprovals: { leaves: 0, expenses: 0, total: 0 },
+      };
+    }
+
+    // 본인 통계
+    const attendanceRate = await calculateAttendanceRate(
+      year,
+      month,
+      currentEmployee.id
+    );
+    const leaveRecords = await prisma.leaveRecord.findMany({
+      where: { employeeId: currentEmployee.id },
+    });
+    const leaveSummary = getAnnualLeaveSummary(
+      currentEmployee.joinDate,
+      leaveRecords
+    );
+
+    return {
+      activeCount: currentEmployee.status === "ACTIVE" ? 1 : 0,
+      onLeaveCount: currentEmployee.status === "ON_LEAVE" ? 1 : 0,
+      flexWorkCount: currentEmployee.workType !== "OFFICE" ? 1 : 0,
+      totalEmployees: 1,
+      attendanceRate,
+      avgLeaveBalance: leaveSummary.remaining,
+      weeklyOvertime: 0, // 본인 주간 초과근무는 계산 복잡, 생략
+      monthlyPayroll: 0, // 본인 급여는 보안상 숨김
+      pendingApprovals: { leaves: 0, expenses: 0, total: 0 }, // Viewer는 승인 권한 없음
+    };
+  }
+
+  // Admin 또는 Manager: 전체/부서 통계
+  const where = employeeFilter || {};
+
   const [
     activeCount,
     onLeaveCount,
@@ -167,15 +233,16 @@ export async function fetchCoreStats(year: number, month: number, userId: string
     monthlyPayroll,
     pendingApprovals,
   ] = await Promise.all([
-    prisma.employee.count({ where: { status: "ACTIVE" } }),
-    prisma.employee.count({ where: { status: "ON_LEAVE" } }),
+    prisma.employee.count({ where: { ...where, status: "ACTIVE" } }),
+    prisma.employee.count({ where: { ...where, status: "ON_LEAVE" } }),
     prisma.employee.count({
       where: {
+        ...where,
         status: "ACTIVE",
         workType: { not: "OFFICE" },
       },
     }),
-    prisma.employee.count(),
+    prisma.employee.count({ where }),
     calculateAttendanceRate(year, month),
     calculateAverageLeaveBalance(),
     calculateWeeklyOvertime(),

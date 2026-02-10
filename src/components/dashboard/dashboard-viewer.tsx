@@ -7,6 +7,7 @@ import {
   fetchPayrollTrendData,
   fetchAttendanceData,
 } from "@/lib/dashboard-queries";
+import { getCurrentUserEmployee } from "@/lib/rbac-helpers";
 
 interface DashboardViewerProps {
   userId: string;
@@ -19,9 +20,22 @@ export async function DashboardViewer({
   year,
   month,
 }: DashboardViewerProps) {
-  // Viewer는 본인 데이터만 + 차트 제한
+  // 현재 사용자의 직원 정보 조회
+  const currentEmployee = await getCurrentUserEmployee();
+
+  if (!currentEmployee) {
+    return (
+      <div className="text-center p-8 text-muted-foreground">
+        직원 정보를 찾을 수 없습니다. 관리자에게 문의하세요.
+      </div>
+    );
+  }
+
+  // Viewer는 본인 데이터만 조회
+  const employeeFilter = { id: currentEmployee.id };
+
   const [coreStats, payrollTrend, attendanceData] = await Promise.all([
-    fetchCoreStats(year, month, userId, "viewer"),
+    fetchCoreStats(year, month, userId, "viewer", "self", employeeFilter),
     fetchPayrollTrendData(),
     fetchAttendanceData(),
   ]);

@@ -22,8 +22,8 @@ interface CoreStatsData {
   weeklyOvertime: number;
   monthlyPayroll: number;
   pendingApprovals: {
-    expense: number;
-    leave: number;
+    expenses: number;
+    leaves: number;
     total: number;
   };
 }
@@ -84,7 +84,7 @@ export function StatCards({ data }: StatCardsProps) {
       <StatCard
         title="미처리 승인"
         value={`${data.pendingApprovals.total}건`}
-        description={`경비 ${data.pendingApprovals.expense}건, 휴가 ${data.pendingApprovals.leave}건`}
+        description={`경비 ${data.pendingApprovals.expenses}건, 휴가 ${data.pendingApprovals.leaves}건`}
         icon={<Receipt className="h-4 w-4" />}
         variant={data.pendingApprovals.total > 5 ? "warning" : "default"}
       />

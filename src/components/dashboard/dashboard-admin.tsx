@@ -37,7 +37,7 @@ export async function DashboardAdmin({
     recentAnomalies,
     pendingApprovals,
   ] = await Promise.all([
-    fetchCoreStats(year, month, userId, "admin"),
+    fetchCoreStats(year, month, userId, "admin", "all"), // scope: all
     fetchPayrollTrendData(),
     fetchAttendanceData(),
     fetchLeaveUsageData(),

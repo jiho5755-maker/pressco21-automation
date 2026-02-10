@@ -13,6 +13,8 @@ import {
   fetchRecentAnomalies,
   fetchPendingApprovalsList,
 } from "@/lib/dashboard-queries";
+import { getCurrentUserEmployee } from "@/lib/rbac-helpers";
+import { prisma } from "@/lib/prisma";
 
 interface DashboardManagerProps {
   userId: string;
@@ -25,7 +27,20 @@ export async function DashboardManager({
   year,
   month,
 }: DashboardManagerProps) {
-  // Manager는 경비 차트 제외
+  // 현재 사용자의 직원 정보 조회
+  const currentEmployee = await getCurrentUserEmployee();
+
+  if (!currentEmployee) {
+    return (
+      <div className="text-center p-8 text-muted-foreground">
+        직원 정보를 찾을 수 없습니다. 관리자에게 문의하세요.
+      </div>
+    );
+  }
+
+  // Manager는 자기 부서 데이터만 조회
+  const employeeFilter = { departmentId: currentEmployee.departmentId };
+
   const [
     coreStats,
     payrollTrend,
@@ -34,7 +49,7 @@ export async function DashboardManager({
     recentAnomalies,
     pendingApprovals,
   ] = await Promise.all([
-    fetchCoreStats(year, month, userId, "manager"),
+    fetchCoreStats(year, month, userId, "manager", "department", employeeFilter),
     fetchPayrollTrendData(),
     fetchAttendanceData(),
     fetchLeaveUsageData(),
