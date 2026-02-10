@@ -9,10 +9,19 @@ import {
 } from "@react-pdf/renderer";
 import type { PayrollRecord, Employee, Department } from "@prisma/client";
 
-// 한글 폰트 등록 (로컬 TTF 파일)
+/**
+ * 한글 폰트 등록
+ *
+ * 사용 폰트: Noto Sans KR Regular (5.88MB)
+ * 출처: Google Fonts CDN (fonts.gstatic.com)
+ *
+ * ⚠️ 클라이언트 사이드 렌더링 시 HTTP 요청 발생
+ * 참고: 로컬 파일 경로(`/public/fonts/`)는 클라이언트에서 작동 불가
+ * 이유: `Font.register`는 절대 URL 또는 서버 사이드 절대 경로만 지원
+ */
 Font.register({
   family: "NotoSansKR",
-  src: "/fonts/NotoSansKR-Regular.ttf",
+  src: "https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLQ.ttf",
 });
 
 // PDF 스타일 (고용노동부 표준 양식)

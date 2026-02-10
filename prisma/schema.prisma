@@ -1,12 +1,12 @@
 // 소기업 경영 자동화 시스템 — DB 스키마
-// PostgreSQL 기반 (Vercel Postgres)
+// 로컬: SQLite, 프로덕션: PostgreSQL (Vercel Postgres)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
