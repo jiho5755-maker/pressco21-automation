@@ -11,6 +11,7 @@ import {
   leaveTypeConfig,
 } from "@/lib/ui-config";
 import { EmployeeEditDialog } from "./employee-edit-dialog";
+import { useRole } from "@/hooks/use-role";
 import type { Department, Employee } from "@prisma/client";
 
 type EmployeeWithDept = Employee & {
@@ -27,6 +28,7 @@ export function EmployeeDetailHeader({
   employee,
   departments,
 }: EmployeeDetailHeaderProps) {
+  const { isAdmin } = useRole();
   const statusCfg = employeeStatusConfig[employee.status] || {
     label: employee.status,
     className: "",
@@ -78,7 +80,10 @@ export function EmployeeDetailHeader({
         </div>
       </div>
 
-      <EmployeeEditDialog employee={employee} departments={departments} />
+      {/* Admin만 직원 정보 수정 가능 */}
+      {isAdmin && (
+        <EmployeeEditDialog employee={employee} departments={departments} />
+      )}
     </div>
   );
 }

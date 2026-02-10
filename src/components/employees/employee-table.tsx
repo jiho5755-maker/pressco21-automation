@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { employeeStatusConfig, workTypeConfig, contractTypeConfig } from "@/lib/ui-config";
 import { AddEmployeeDialog } from "./add-employee-dialog";
+import { useRole } from "@/hooks/use-role";
 import type { Department, Employee } from "@prisma/client";
 
 type EmployeeWithRelations = Employee & {
@@ -32,6 +33,7 @@ interface EmployeeTableProps {
 
 export function EmployeeTable({ employees, departments }: EmployeeTableProps) {
   const [search, setSearch] = useState("");
+  const { isAdmin } = useRole();
 
   const filtered = employees.filter(
     (emp) =>
@@ -54,7 +56,8 @@ export function EmployeeTable({ employees, departments }: EmployeeTableProps) {
             className="pl-9"
           />
         </div>
-        <AddEmployeeDialog departments={departments} />
+        {/* Admin만 직원 추가 가능 */}
+        {isAdmin && <AddEmployeeDialog departments={departments} />}
       </div>
 
       {/* 테이블 */}

@@ -24,6 +24,7 @@ import {
   rejectLeaveRequest,
 } from "@/actions/leave-actions";
 import { LeaveRejectDialog } from "./leave-reject-dialog";
+import { useRole } from "@/hooks/use-role";
 
 type LeaveWithRelations = LeaveRecord & {
   employee: Pick<Employee, "id" | "name" | "employeeNo">;
@@ -36,6 +37,7 @@ interface LeaveTableProps {
 
 export function LeaveTable({ leaveRecords }: LeaveTableProps) {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const { isAdminOrManager } = useRole();
 
   const { execute: executeApprove, isPending: isApproving } = useAction(
     approveLeaveRequest,
@@ -122,7 +124,8 @@ export function LeaveTable({ leaveRecords }: LeaveTableProps) {
                   {format(new Date(record.requestedAt), "MM-dd", { locale: ko })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {record.status === "PENDING" && (
+                  {/* Admin/Manager만 승인/반려 가능 */}
+                  {record.status === "PENDING" && isAdminOrManager && (
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"

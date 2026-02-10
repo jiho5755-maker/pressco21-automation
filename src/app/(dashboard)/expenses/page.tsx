@@ -3,9 +3,33 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ExpenseForm } from "@/components/expenses/expense-form";
 import { ExpenseHistory } from "@/components/expenses/expense-history";
 import { prisma } from "@/lib/prisma";
+import {
+  getDataScope,
+  buildEmployeeFilter,
+  getCurrentUserEmployee,
+} from "@/lib/rbac-helpers";
 
 export default async function ExpensesPage() {
+  // 데이터 범위 및 필터 생성
+  const scope = await getDataScope();
+  const currentEmployee = await getCurrentUserEmployee();
+  const employeeFilter = buildEmployeeFilter(scope, currentEmployee);
+
+  // 경비 조회 (역할별 필터링)
   const expenses = await prisma.expense.findMany({
+    where: {
+      employee: employeeFilter, // 역할별 필터 적용
+    },
+    include: {
+      employee: {
+        select: {
+          id: true,
+          employeeNo: true,
+          name: true,
+          departmentId: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 20,
   });

@@ -1,6 +1,8 @@
-// 급여 관리 페이지 (Server Component)
+// 급여 관리 페이지 (Server Component) - Admin 전용
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
 import { PayrollPageClient } from "./client";
 
@@ -9,12 +11,20 @@ export default async function PayrollPage({
 }: {
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  // 권한 검증: Admin만 접근 가능
+  const session = await auth();
+  const role = session?.user?.role || "viewer";
+
+  if (role !== "admin") {
+    redirect("/dashboard"); // Manager/Viewer는 리다이렉트
+  }
+
   const params = await searchParams;
   const now = new Date();
   const year = params.year ? parseInt(params.year) : now.getFullYear();
   const month = params.month ? parseInt(params.month) : now.getMonth() + 1;
 
-  // 지정된 연월 급여 기록 조회
+  // 지정된 연월 급여 기록 조회 (Admin이므로 전체 조회)
   const payrollRecords = await prisma.payrollRecord.findMany({
     where: { year, month },
     include: {
@@ -38,7 +48,7 @@ export default async function PayrollPage({
     totalCount: payrollRecords.length,
   };
 
-  // 활성 직원 목록 (급여 생성용)
+  // 활성 직원 목록 (급여 생성용) - Admin이므로 전체 조회
   const employees = await prisma.employee.findMany({
     where: { status: "ACTIVE" },
     select: {

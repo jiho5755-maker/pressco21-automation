@@ -2,10 +2,20 @@
 import { Suspense } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
+import {
+  getDataScope,
+  buildEmployeeFilter,
+  getCurrentUserEmployee,
+} from "@/lib/rbac-helpers";
 import { LeavesPageClient } from "./client";
 
 export default async function LeavesPage() {
-  // 1. 휴가 기록 조회 (전체 기간, 최근 6개월)
+  // 데이터 범위 및 필터 생성
+  const scope = await getDataScope();
+  const currentEmployee = await getCurrentUserEmployee();
+  const employeeFilter = buildEmployeeFilter(scope, currentEmployee);
+
+  // 1. 휴가 기록 조회 (전체 기간, 최근 6개월 + 역할별 필터링)
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -13,6 +23,10 @@ export default async function LeavesPage() {
     where: {
       requestedAt: {
         gte: sixMonthsAgo, // 최근 6개월
+      },
+      employee: {
+        status: "ACTIVE", // 재직자만
+        ...employeeFilter, // 역할별 필터
       },
     },
     include: {
@@ -43,10 +57,11 @@ export default async function LeavesPage() {
     rejectedCount: leaveRecords.filter((r) => r.status === "REJECTED").length,
   };
 
-  // 3. 직원 목록 조회 (재직자만, department 포함)
+  // 3. 직원 목록 조회 (재직자만 + 역할별 필터링)
   const employees = await prisma.employee.findMany({
     where: {
       status: "ACTIVE",
+      ...employeeFilter,
     },
     include: {
       department: true,

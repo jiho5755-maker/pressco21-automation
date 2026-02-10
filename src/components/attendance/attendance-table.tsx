@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatMinutesToHours } from "@/lib/attendance-calculator";
+import { useRole } from "@/hooks/use-role";
 
 type AttendanceRecordWithEmployee = AttendanceRecord & {
   employee: Employee & {
@@ -46,6 +47,8 @@ export function AttendanceTable({
   onConfirm,
   onUnconfirm,
 }: AttendanceTableProps) {
+  const { isAdminOrManager } = useRole();
+
   if (records.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -146,14 +149,19 @@ export function AttendanceTable({
                     <DropdownMenuItem onClick={() => onEdit(record)}>
                       수정
                     </DropdownMenuItem>
-                    {record.isConfirmed ? (
-                      <DropdownMenuItem onClick={() => onUnconfirm(record.id)}>
-                        확정 해제
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => onConfirm(record.id)}>
-                        확정
-                      </DropdownMenuItem>
+                    {/* Admin/Manager만 확정 기능 사용 가능 */}
+                    {isAdminOrManager && (
+                      <>
+                        {record.isConfirmed ? (
+                          <DropdownMenuItem onClick={() => onUnconfirm(record.id)}>
+                            확정 해제
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => onConfirm(record.id)}>
+                            확정
+                          </DropdownMenuItem>
+                        )}
+                      </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

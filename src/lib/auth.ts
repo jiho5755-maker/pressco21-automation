@@ -52,8 +52,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    authorized({ auth }) {
-      return !!auth?.user;
+    authorized({ auth, request }) {
+      // 인증되지 않은 경우 false 반환 (로그인 페이지로 리다이렉트)
+      if (!auth?.user) {
+        return false;
+      }
+
+      const pathname = request.nextUrl.pathname;
+      const role = auth.user.role;
+
+      // /employees: admin/manager만 허용
+      if (pathname.startsWith("/employees")) {
+        if (role === "viewer") {
+          return Response.redirect(new URL("/dashboard", request.nextUrl));
+        }
+      }
+
+      // /payroll: admin만 허용
+      if (pathname.startsWith("/payroll")) {
+        if (role !== "admin") {
+          return Response.redirect(new URL("/dashboard", request.nextUrl));
+        }
+      }
+
+      // 그 외 모든 인증된 사용자 허용
+      return true;
     },
   },
 });

@@ -2,6 +2,12 @@ import { Suspense } from "react";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import {
+  getDataScope,
+  buildEmployeeFilter,
+  getCurrentUserEmployee,
+} from "@/lib/rbac-helpers";
 import { calculateMonthlyStats } from "@/lib/attendance-calculator";
 import { AttendancePageClient } from "./client";
 
@@ -11,7 +17,12 @@ export default async function AttendancePage() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  // 1. 근태 기록 조회 (현재 월)
+  // 데이터 범위 및 필터 생성
+  const scope = await getDataScope();
+  const currentEmployee = await getCurrentUserEmployee();
+  const employeeFilter = buildEmployeeFilter(scope, currentEmployee);
+
+  // 1. 근태 기록 조회 (현재 월 + 역할별 필터링)
   const records = await prisma.attendanceRecord.findMany({
     where: {
       date: {
@@ -20,6 +31,7 @@ export default async function AttendancePage() {
       },
       employee: {
         status: "ACTIVE", // 재직자만
+        ...employeeFilter, // 역할별 필터
       },
     },
     include: {
@@ -37,10 +49,11 @@ export default async function AttendancePage() {
   // 2. 월별 통계 계산
   const stats = calculateMonthlyStats(records);
 
-  // 3. 직원 목록 조회 (재직자만)
+  // 3. 직원 목록 조회 (재직자만 + 역할별 필터링)
   const employees = await prisma.employee.findMany({
     where: {
       status: "ACTIVE",
+      ...employeeFilter,
     },
     include: {
       department: true,
