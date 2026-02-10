@@ -5,31 +5,20 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
 import type { PayrollRecord, Employee, Department } from "@prisma/client";
 
-// 한글 폰트 등록 (Pretendard - jsDelivr CDN)
-// Pretendard: 한국어 최적화 폰트, @react-pdf/renderer 호환
-Font.register({
-  family: "Pretendard",
-  fonts: [
-    {
-      src: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/public/static/Pretendard-Regular.otf",
-      fontWeight: 400,
-    },
-    {
-      src: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/public/static/Pretendard-Bold.otf",
-      fontWeight: 700,
-    },
-  ],
-});
+// 한글 폰트 등록
+// TODO: CDN 폰트 로딩이 불안정하여 현재 기본 폰트 사용
+// 개선 방안: /public/fonts/ 폴더에 로컬 TTF 파일 추가 후
+// Font.register({ family: "NotoSansKR", src: "/fonts/NotoSansKR-Regular.ttf" })
+// 참고: @react-pdf/renderer는 TTF 형식 권장, OTF/WOFF는 호환성 이슈 있음
 
 // PDF 스타일
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    fontFamily: "Pretendard", // 한글 폰트 (jsDelivr CDN)
+    fontFamily: "Helvetica", // PDF 기본 폰트 (한글 폰트는 로컬 파일로 추가 필요)
     fontSize: 10,
   },
   header: {
