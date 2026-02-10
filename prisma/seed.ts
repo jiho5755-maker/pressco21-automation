@@ -7,10 +7,10 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("시드 데이터 생성 시작...");
 
-  // ─── 1. 관리자 계정 ───
+  // ─── 1. 사용자 계정 (Admin/Manager/Viewer) ───
   const adminEmail = process.env.AUTH_ADMIN_EMAIL || "admin@company.com";
   const adminPassword = process.env.AUTH_ADMIN_PASSWORD || "admin1234";
-  const hashedPassword = await bcrypt.hash(adminPassword, 12);
+  const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
@@ -18,11 +18,39 @@ async function main() {
     create: {
       name: "관리자",
       email: adminEmail,
-      password: hashedPassword,
+      password: hashedAdminPassword,
       role: "admin",
     },
   });
-  console.log(`  관리자 계정 생성: ${admin.email}`);
+  console.log(`  ✓ Admin 계정 생성: ${admin.email}`);
+
+  // Manager 계정
+  const hashedManagerPassword = await bcrypt.hash("manager1234", 12);
+  const manager = await prisma.user.upsert({
+    where: { email: "manager@company.com" },
+    update: {},
+    create: {
+      name: "부서장",
+      email: "manager@company.com",
+      password: hashedManagerPassword,
+      role: "manager",
+    },
+  });
+  console.log(`  ✓ Manager 계정 생성: ${manager.email}`);
+
+  // Viewer 계정
+  const hashedViewerPassword = await bcrypt.hash("viewer1234", 12);
+  const viewer = await prisma.user.upsert({
+    where: { email: "viewer@company.com" },
+    update: {},
+    create: {
+      name: "일반직원",
+      email: "viewer@company.com",
+      password: hashedViewerPassword,
+      role: "viewer",
+    },
+  });
+  console.log(`  ✓ Viewer 계정 생성: ${viewer.email}`);
 
   // ─── 2. 부서 6개 ───
   const departmentNames = [
