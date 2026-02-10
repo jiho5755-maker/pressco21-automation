@@ -5,13 +5,19 @@ export const authConfig = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   callbacks: {
-    // ✅ JWT 콜백 추가 (middleware에서도 실행되도록)
-    // user는 authorize()에서 반환된 객체 (role 포함)
+    // ✅ JWT 콜백: user.role → token.role 저장 (middleware에서도 실행)
     jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role; // JWT에 role 저장
+        token.role = (user as { role?: string }).role;
       }
       return token;
+    },
+    // ✅ session 콜백: token.role → session.user.role 매핑 (middleware 필수)
+    session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string;
+      }
+      return session;
     },
     authorized({ auth, request }) {
       const pathname = request.nextUrl.pathname;
