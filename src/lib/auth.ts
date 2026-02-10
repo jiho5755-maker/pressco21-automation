@@ -39,13 +39,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    ...authConfig.callbacks,
-    jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role?: string }).role;
-      }
-      return token;
-    },
+    ...authConfig.callbacks, // JWT 콜백은 authConfig에서 처리됨
+    // session 콜백만 추가 (JWT → Session 매핑)
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
