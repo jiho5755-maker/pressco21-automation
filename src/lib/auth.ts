@@ -4,11 +4,11 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "@/lib/auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" }, // Credentials + PrismaAdapter = JWT 필수
-  pages: { signIn: "/login" },
   providers: [
     Credentials({
       credentials: {
@@ -39,6 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: string }).role;
@@ -51,38 +52,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
       }
       return session;
-    },
-    authorized({ auth, request }) {
-      const pathname = request.nextUrl.pathname;
-
-      // 인증되지 않은 경우 false 반환 (로그인 페이지로 리다이렉트)
-      if (!auth?.user) {
-        return false;
-      }
-
-      // 루트 경로 접근 시 대시보드로 리다이렉트
-      if (pathname === "/") {
-        return Response.redirect(new URL("/dashboard", request.nextUrl));
-      }
-
-      const role = auth.user.role;
-
-      // /employees: admin/manager만 허용
-      if (pathname.startsWith("/employees")) {
-        if (role === "viewer") {
-          return Response.redirect(new URL("/dashboard", request.nextUrl));
-        }
-      }
-
-      // /payroll: admin만 허용
-      if (pathname.startsWith("/payroll")) {
-        if (role !== "admin") {
-          return Response.redirect(new URL("/dashboard", request.nextUrl));
-        }
-      }
-
-      // 그 외 모든 인증된 사용자 허용
-      return true;
     },
   },
 });
