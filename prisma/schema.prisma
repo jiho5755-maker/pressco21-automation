@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -235,6 +235,17 @@ model AttendanceRecord {
   nightWork   Int       @default(0) // 야간근로(분) 22~06시
   note        String?
 
+  // ── 휴일근로 관리 (Phase 1-D Task 2) ──
+  isHolidayWork   Boolean   @default(false) // 휴일근로 여부
+  holidayType     String? // "WEEKLY_REST"|"LEGAL_HOLIDAY"|"AGREED_HOLIDAY" (휴일 유형)
+  holidayWorkHours Float?   @default(0) // 휴일근로 시간 (8시간 이내, × 1.5)
+  holidayOvertimeHours Float? @default(0) // 휴일 초과근로 (8시간 초과, × 2.0 또는 × 1.5)
+
+  // ── 휴일대체 관리 (근로기준법 제57조) ──
+  isSubstitutedHoliday Boolean   @default(false) // 휴일대체 적용 여부
+  originalHolidayDate  DateTime? // 원래 휴일 날짜 (휴일대체 시)
+  substitutedDate      DateTime? // 대체된 근로일 날짜 (휴일대체 시)
+
   isConfirmed Boolean @default(false) // 관리자 확인 여부
 
   createdAt DateTime @default(now())
@@ -244,6 +255,7 @@ model AttendanceRecord {
   @@index([employeeId, date]) // 직원별 날짜 조회 최적화
   @@index([date]) // 월별 집계 최적화
   @@index([isConfirmed]) // 미확정 기록 조회 최적화
+  @@index([isHolidayWork]) // 휴일근로 조회 최적화
 }
 
 // ─────────────────────────────────────────────

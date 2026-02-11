@@ -15,7 +15,9 @@ import { PayrollGenerateDialog } from "@/components/payroll/payroll-generate-dia
 import {
   confirmPayrollRecords,
   deletePayrollRecord,
+  exportPayrollToExcel,
 } from "@/actions/payroll-actions";
+import { FileSpreadsheet } from "lucide-react";
 
 type PayrollRecordWithEmployee = PayrollRecord & {
   employee: Employee & {
@@ -104,6 +106,38 @@ export function PayrollPageClient({
     },
   });
 
+  const exportAction = useAction(exportPayrollToExcel, {
+    onSuccess: ({ data }) => {
+      if (!data) return;
+
+      // Base64 Buffer를 Blob으로 변환
+      const byteCharacters = atob(data.buffer);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      // 다운로드
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Excel 파일이 다운로드되었습니다.");
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || "내보내기 실패");
+    },
+  });
+
   const handleConfirm = (ids: string[]) => {
     confirmAction.execute({ ids });
   };
@@ -114,10 +148,24 @@ export function PayrollPageClient({
     }
   };
 
+  const handleExportExcel = () => {
+    const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth() + 1;
+    exportAction.execute({ year, month });
+  };
+
   return (
     <div className="space-y-6">
       {/* 액션 버튼 */}
       <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleExportExcel}
+          disabled={exportAction.isPending || initialRecords.length === 0}
+        >
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          {exportAction.isPending ? "내보내는 중..." : "Excel 내보내기"}
+        </Button>
         <Button onClick={() => setGenerateDialogOpen(true)}>급여 생성</Button>
       </div>
 

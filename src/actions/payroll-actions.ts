@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { authActionClient, ActionError } from "@/lib/safe-action";
 import { prisma } from "@/lib/prisma";
 import { calculateMonthlyPayroll } from "@/lib/payroll-calculator";
+import ExcelJS from "exceljs";
 
 // ── Zod 스키마 ──
 
@@ -20,6 +21,11 @@ const confirmPayrollSchema = z.object({
 
 const deletePayrollSchema = z.object({
   id: z.string().min(1),
+});
+
+const exportPayrollSchema = z.object({
+  year: z.number().int().min(2020).max(2100),
+  month: z.number().int().min(1).max(12),
 });
 
 // ── Server Actions ──
@@ -145,4 +151,116 @@ export const deletePayrollRecord = authActionClient
     revalidatePath("/payroll");
 
     return { success: true };
+  });
+
+/**
+ * Excel 급여대장 내보내기 (세무사 제출용)
+ *
+ * @returns Excel 파일 Buffer (base64 인코딩)
+ */
+export const exportPayrollToExcel = authActionClient
+  .inputSchema(exportPayrollSchema)
+  .action(async ({ parsedInput }) => {
+    const { year, month } = parsedInput;
+
+    // 1. 해당 월의 급여 기록 조회
+    const records = await prisma.payrollRecord.findMany({
+      where: { year, month },
+      include: {
+        employee: {
+          include: { department: true },
+        },
+      },
+      orderBy: [{ employee: { department: { name: "asc" } } }, { employee: { employeeNo: "asc" } }],
+    });
+
+    if (records.length === 0) {
+      throw new ActionError("해당 월의 급여 기록이 없습니다.");
+    }
+
+    // 2. ExcelJS 워크북 생성
+    const workbook = new ExcelJS.Workbook();
+
+    // 워크북 속성
+    workbook.creator = "소기업 자동화 시스템";
+    workbook.created = new Date();
+    workbook.title = `${year}년 ${month}월 급여대장`;
+
+    // 워크시트 추가
+    const sheet = workbook.addWorksheet("급여대장");
+
+    // 3. 헤더 행 (굵게)
+    const headerRow = sheet.addRow([
+      "부서",
+      "사번",
+      "성명",
+      "기본급",
+      "식대",
+      "교통비",
+      "직책수당",
+      "변동OT",
+      "변동야간",
+      "변동휴일",
+      "총지급액",
+      "국민연금",
+      "건강보험",
+      "고용보험",
+      "소득세",
+      "지방소득세",
+      "총공제액",
+      "실수령액",
+      "확정여부",
+    ]);
+
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: "middle", horizontal: "center" };
+
+    // 4. 데이터 행
+    for (const record of records) {
+      const totalDeduction =
+        record.nationalPension +
+        record.healthInsurance +
+        record.longTermCare +
+        record.employmentInsurance +
+        record.incomeTax +
+        record.localIncomeTax;
+
+      sheet.addRow([
+        record.employee.department.name,
+        record.employee.employeeNo,
+        record.employee.name,
+        record.baseSalary,
+        record.mealAllowance,
+        record.transportAllowance,
+        record.positionAllowance,
+        record.variableOvertimeAmount,
+        record.variableNightWorkAmount,
+        record.variableHolidayWorkAmount,
+        record.totalGross,
+        record.nationalPension,
+        record.healthInsurance + record.longTermCare,
+        record.employmentInsurance,
+        record.incomeTax,
+        record.localIncomeTax,
+        totalDeduction,
+        record.netSalary,
+        record.isConfirmed ? "확정" : "미확정",
+      ]);
+    }
+
+    // 5. 컬럼 너비 자동 조정
+    sheet.columns.forEach((column) => {
+      if (column) {
+        column.width = 12;
+      }
+    });
+
+    // 6. Buffer 생성
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return {
+      success: true,
+      buffer: Buffer.from(buffer).toString("base64"),
+      filename: `급여대장_${year}_${month}.xlsx`,
+    };
   });

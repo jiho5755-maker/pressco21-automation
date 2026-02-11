@@ -46,6 +46,13 @@ export const LEAVE_TYPES = {
   COMPENSATORY: "대체휴무",
 } as const;
 
+// ── 휴일 유형 (Phase 1-D Task 2) ──
+export const HOLIDAY_TYPES = {
+  WEEKLY_REST: "주휴일", // 1주 1회 (근로기준법 제55조)
+  LEGAL_HOLIDAY: "법정공휴일", // 관공서의 공휴일에 관한 규정 (약정 시)
+  AGREED_HOLIDAY: "약정휴일", // 노사 합의로 정한 휴일
+} as const;
+
 // ── 대체인력 사유 ──
 export const REPLACEMENT_REASONS = {
   MATERNITY: "출산전후휴가 대체",

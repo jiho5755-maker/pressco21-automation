@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { calculateHourlyRate, calculateSalary } from "@/lib/salary-calculator";
+import { LABOR_STANDARDS_2026 } from "@/lib/constants";
 
 /**
  * 월별 근태 기록 기반 변동 수당 계산
@@ -31,12 +32,24 @@ export async function calculateVariableAllowances(
     select: {
       overtime: true,
       nightWork: true,
+      isHolidayWork: true,
+      holidayWorkHours: true,
+      holidayOvertimeHours: true,
+      isSubstitutedHoliday: true,
     },
   });
 
   // 2. 월별 총 가산 시간 집계 (분 단위)
   const totalOvertimeMinutes = records.reduce((sum, r) => sum + r.overtime, 0);
   const totalNightWorkMinutes = records.reduce((sum, r) => sum + r.nightWork, 0);
+
+  // 휴일근로 시간 집계 (시간 단위 → 분 단위 변환)
+  const totalHolidayWorkMinutes = records.reduce((sum, r) => {
+    if (!r.isHolidayWork) return sum;
+    const regularHours = r.holidayWorkHours || 0;
+    const overtimeHours = r.holidayOvertimeHours || 0;
+    return sum + (regularHours + overtimeHours) * 60;
+  }, 0);
 
   // 3. 직원 정보 조회 (통상시급 계산용)
   const employee = await prisma.employee.findUnique({
@@ -54,6 +67,7 @@ export async function calculateVariableAllowances(
   // 5. 가산수당 계산 (통상시급 × 1.5 × 시간)
   const overtimeHours = totalOvertimeMinutes / 60;
   const nightWorkHours = totalNightWorkMinutes / 60;
+  const holidayWorkHours = totalHolidayWorkMinutes / 60;
 
   // 고정OT 사용 중이면 변동 수당 0원
   const variableOvertimeAmount = employee.useFixedOT
@@ -63,14 +77,70 @@ export async function calculateVariableAllowances(
     ? 0
     : Math.round(hourlyRate * 1.5 * nightWorkHours);
 
+  // 휴일근로 수당 계산 (휴일대체 여부에 따라 분기)
+  const variableHolidayWorkAmount = employee.useFixedOT
+    ? 0
+    : calculateHolidayWorkPayForRecords(records, hourlyRate);
+
   return {
     variableOvertimeMinutes: totalOvertimeMinutes,
     variableNightWorkMinutes: totalNightWorkMinutes,
-    variableHolidayMinutes: 0, // 추후 구현
+    variableHolidayMinutes: totalHolidayWorkMinutes,
     variableOvertimeAmount,
     variableNightWorkAmount,
-    variableHolidayWorkAmount: 0,
+    variableHolidayWorkAmount,
   };
+}
+
+/**
+ * 휴일근로 수당 계산 (내부 함수)
+ *
+ * @param records 근태 기록 배열
+ * @param hourlyRate 통상시급
+ * @returns 휴일근로 수당 총액
+ *
+ * **계산 로직**:
+ * - 휴일대체 적용 (isSubstitutedHoliday=true)
+ *   - 8시간 이내: 통상임금 × 1.0
+ *   - 8시간 초과: 통상임금 × 1.0 + 연장근로 × 1.5
+ * - 휴일대체 미적용 (isSubstitutedHoliday=false)
+ *   - 8시간 이내: 통상임금 × 1.5 (근로기준법 제56조)
+ *   - 8시간 초과: 통상임금 × 1.5 + 연장근로 × 0.5 = × 2.0
+ *
+ * **법적 근거**:
+ * - 근로기준법 제56조 (가산수당)
+ * - 근로기준법 제57조 (휴일대체)
+ * - 고용노동부 행정해석 근기 68207-2583 (2001.9.6)
+ */
+function calculateHolidayWorkPayForRecords(
+  records: Array<{
+    isHolidayWork: boolean;
+    holidayWorkHours: number | null;
+    holidayOvertimeHours: number | null;
+    isSubstitutedHoliday: boolean;
+  }>,
+  hourlyRate: number
+): number {
+  let totalPay = 0;
+
+  for (const record of records) {
+    if (!record.isHolidayWork) continue;
+
+    const regularHours = record.holidayWorkHours || 0;
+    const overtimeHours = record.holidayOvertimeHours || 0;
+
+    if (record.isSubstitutedHoliday) {
+      // 휴일대체 적법 → 통상임금
+      totalPay += hourlyRate * regularHours; // × 1.0
+      totalPay += hourlyRate * 1.5 * overtimeHours; // 연장은 × 1.5
+    } else {
+      // 휴일대체 미적용 → 가산수당
+      totalPay += hourlyRate * 1.5 * regularHours; // × 1.5
+      totalPay += hourlyRate * 2.0 * overtimeHours; // × 2.0
+    }
+  }
+
+  return Math.round(totalPay);
 }
 
 /**
