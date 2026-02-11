@@ -71,11 +71,19 @@ export const EXPENSE_STATUS = {
 
 // ── 정부지원사업 유형 ──
 export const SUBSIDY_TYPES = {
+  // 기존 5가지 (Phase 2)
   FLEXIBLE_WORK: "유연근무 장려금",
   REPLACEMENT_WORKER: "출산육아기 대체인력 지원금",
   PARENTAL_LEAVE_GRANT: "육아휴직 부여 지원금",
   WORK_SHARING: "업무분담 지원금",
   INFRA_SUPPORT: "유연근무 인프라 구축비",
+
+  // 신규 4가지 (Phase 3-D)
+  MATERNITY_LEAVE_PAY: "출산전후휴가 급여",
+  SPOUSE_MATERNITY_PAY: "배우자 출산휴가 급여",
+  PARENTAL_LEAVE_PAY: "육아휴직 급여",
+  SHORTENED_WORK_HOURS_PAY: "육아기 근로시간 단축 급여",
+  PREGNANCY_REDUCED_HOURS: "임신기 근로시간 단축 급여",
 } as const;
 
 // ── 정부지원사업 상태 ──
@@ -119,6 +127,22 @@ export const USER_ROLES = {
   MANAGER: "manager",
   VIEWER: "viewer",
 } as const;
+
+// ── 급여 지급일 ──
+export const PAYROLL_PAYMENT = {
+  paymentDate: "말일", // 매월 말일
+  calculationPeriodStart: 1, // 당월 1일부터
+  calculationPeriodEnd: "말일", // 말일까지
+  description: "당월 1일부터 말일까지 마감, 익월 말일 지급",
+} as const;
+
+// ── 급여 지급일 옵션 ──
+export const SALARY_PAYMENT_OPTIONS = [
+  { value: "말일", label: "매월 말일" },
+  { value: "21", label: "매월 21일" },
+  { value: "25", label: "매월 25일" },
+  { value: "10", label: "매월 10일" },
+] as const;
 
 // ── 2026년 기준 노무 상수 ──
 export const LABOR_STANDARDS_2026 = {
@@ -200,6 +224,50 @@ export const MATERNITY_PARENTAL_2026 = {
     baseAfterOneYear: 15,
     additionalPerTwoYears: 1,
     maxDays: 25,
+  },
+} as const;
+
+// ── 출산육아 지원금 기준 (Phase 3-D) ──
+export const MATERNITY_SUBSIDIES_2026 = {
+  // 출산전후휴가 급여 (고용보험법 제75조)
+  maternityLeavePay: {
+    duration: 90, // 90일 (다태아 120일)
+    postBirthMinDays: 45, // 출산 후 최소 45일
+    firstMonthRate: 1.0, // 첫 달 100% (상한 200만원)
+    secondMonthOnwardRate: 0.8, // 둘째 달 이후 80% (상한 160만원)
+    firstMonthCap: 2000000, // 첫 달 상한 200만원
+    secondMonthCap: 1600000, // 둘째 달 이후 상한 160만원
+  },
+  // 배우자 출산휴가 급여 (고용보험법 제76조의2)
+  spouseMaternityPay: {
+    duration: 20, // 20일 (2025.2.23 개정)
+    dailyRate: 1.0, // 통상임금의 100%
+    dailyCap: 100000, // 일 상한 10만원
+  },
+  // 육아휴직 급여 (고용보험법 제70조)
+  parentalLeavePay: {
+    maxMonths: 12, // 최대 12개월
+    paymentRate: 0.8, // 급여의 80%
+    monthlyMax: 1600000, // 상한 160만원/월
+    monthlyMin: 700000, // 하한 70만원/월
+  },
+  // 육아기 근로시간 단축 급여 (고용보험법 제73조의2)
+  shortenedWorkHoursPay: {
+    maxMonths: 24, // 최대 24개월
+    maxHoursPerWeek: 15, // 최대 단축 15시간/주
+    minHoursPerWeek: 5, // 최소 단축 5시간/주
+    monthlyPayByHours: {
+      // 단축 시간별 월 급여
+      5: 400000, // 5~10시간 미만
+      10: 500000, // 10~15시간 미만
+      15: 600000, // 15시간 이상
+    },
+  },
+  // 임신기 근로시간 단축 급여 (고용보험법 제76조의3)
+  pregnancyReducedHours: {
+    maxMonths: 12, // 최대 12개월
+    maxHoursPerWeek: 10, // 최대 단축 10시간/주
+    monthlyPay: 800000, // 월 80만원 (고정)
   },
 } as const;
 

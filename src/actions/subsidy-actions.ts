@@ -17,28 +17,48 @@ import {
   checkWorkSharingEligibility,
   checkInfraSupportEligibility,
   checkDuplicateApplication,
+  // Phase 3-D: 출산육아 지원금 5가지
+  checkMaternityLeavePayEligibility,
+  checkSpouseMaternityPayEligibility,
+  checkParentalLeavePayEligibility,
+  checkShortenedWorkHoursPayEligibility,
+  checkPregnancyReducedHoursEligibility,
 } from "@/lib/subsidy-calculator";
 
 // ── 지원금 신청 생성 스키마 ──
 const createSubsidySchema = z.object({
   type: z.enum([
+    // 기존 5가지 (Phase 2)
     "FLEXIBLE_WORK",
     "REPLACEMENT_WORKER",
     "PARENTAL_LEAVE_GRANT",
     "WORK_SHARING",
     "INFRA_SUPPORT",
+    // 신규 5가지 (Phase 3-D)
+    "MATERNITY_LEAVE_PAY",
+    "SPOUSE_MATERNITY_PAY",
+    "PARENTAL_LEAVE_PAY",
+    "SHORTENED_WORK_HOURS_PAY",
+    "PREGNANCY_REDUCED_HOURS",
   ]),
   year: z.number().int().min(2020).max(2099),
   month: z.number().int().min(1).max(12),
   employeeId: z.string(),
 
-  // 유형별 조건부 필드
+  // 유형별 조건부 필드 (기존 5가지)
   flexibleWorkCount: z.number().int().min(0).optional(),
   replacementEmployeeId: z.string().optional(),
   replacementStartDate: z.string().optional(), // ISO date
   replacementEndDate: z.string().optional(),
   childBirthDate: z.string().optional(),
   note: z.string().max(500).optional(),
+
+  // Phase 3-D: 출산육아 지원금 조건부 필드
+  maternityLeaveStartDate: z.string().optional(),
+  maternityLeaveEndDate: z.string().optional(),
+  parentalLeaveStartDate: z.string().optional(),
+  parentalLeaveEndDate: z.string().optional(),
+  shortenedHoursPerWeek: z.number().int().min(0).optional(),
 });
 
 export type CreateSubsidyInput = z.infer<typeof createSubsidySchema>;
@@ -159,6 +179,68 @@ export const createSubsidyApplication = authActionClient
           totalEmployeesUnder30
         );
         break;
+
+      // Phase 3-D: 출산육아 지원금 5가지
+      case "MATERNITY_LEAVE_PAY":
+        if (
+          !parsedInput.childBirthDate ||
+          !parsedInput.maternityLeaveStartDate ||
+          !parsedInput.maternityLeaveEndDate
+        ) {
+          throw new ActionError("출산휴가 정보를 모두 입력해주세요.");
+        }
+        eligibility = checkMaternityLeavePayEligibility(
+          new Date(parsedInput.childBirthDate),
+          new Date(parsedInput.maternityLeaveStartDate),
+          new Date(parsedInput.maternityLeaveEndDate),
+          employee.baseSalary
+        );
+        break;
+
+      case "SPOUSE_MATERNITY_PAY":
+        if (!parsedInput.childBirthDate) {
+          throw new ActionError("자녀 출생일을 입력해주세요.");
+        }
+        eligibility = checkSpouseMaternityPayEligibility(
+          new Date(parsedInput.childBirthDate),
+          employee.baseSalary
+        );
+        break;
+
+      case "PARENTAL_LEAVE_PAY":
+        if (
+          !parsedInput.childBirthDate ||
+          !parsedInput.parentalLeaveStartDate ||
+          !parsedInput.parentalLeaveEndDate
+        ) {
+          throw new ActionError("육아휴직 정보를 모두 입력해주세요.");
+        }
+        eligibility = checkParentalLeavePayEligibility(
+          new Date(parsedInput.childBirthDate),
+          new Date(parsedInput.parentalLeaveStartDate),
+          new Date(parsedInput.parentalLeaveEndDate),
+          employee.baseSalary
+        );
+        break;
+
+      case "SHORTENED_WORK_HOURS_PAY":
+        if (!parsedInput.childBirthDate || !parsedInput.shortenedHoursPerWeek) {
+          throw new ActionError("육아기 근로시간 단축 정보를 입력해주세요.");
+        }
+        eligibility = checkShortenedWorkHoursPayEligibility(
+          new Date(parsedInput.childBirthDate),
+          parsedInput.shortenedHoursPerWeek
+        );
+        break;
+
+      case "PREGNANCY_REDUCED_HOURS":
+        if (!parsedInput.shortenedHoursPerWeek) {
+          throw new ActionError("주당 단축 시간을 입력해주세요.");
+        }
+        eligibility = checkPregnancyReducedHoursEligibility(
+          parsedInput.shortenedHoursPerWeek
+        );
+        break;
     }
 
     if (!eligibility.eligible) {
@@ -173,6 +255,7 @@ export const createSubsidyApplication = authActionClient
         month: parsedInput.month,
         employeeId: parsedInput.employeeId,
         requestedAmount: eligibility.calculatedAmount,
+        // 기존 5가지 필드
         flexibleWorkCount: parsedInput.flexibleWorkCount || null,
         replacementEmployeeId: parsedInput.replacementEmployeeId || null,
         replacementStartDate: parsedInput.replacementStartDate
@@ -184,6 +267,21 @@ export const createSubsidyApplication = authActionClient
         childBirthDate: parsedInput.childBirthDate
           ? new Date(parsedInput.childBirthDate)
           : null,
+        // Phase 3-D: 출산육아 지원금 필드
+        maternityLeaveStartDate: parsedInput.maternityLeaveStartDate
+          ? new Date(parsedInput.maternityLeaveStartDate)
+          : null,
+        maternityLeaveEndDate: parsedInput.maternityLeaveEndDate
+          ? new Date(parsedInput.maternityLeaveEndDate)
+          : null,
+        parentalLeaveStartDate: parsedInput.parentalLeaveStartDate
+          ? new Date(parsedInput.parentalLeaveStartDate)
+          : null,
+        parentalLeaveEndDate: parsedInput.parentalLeaveEndDate
+          ? new Date(parsedInput.parentalLeaveEndDate)
+          : null,
+        shortenedHoursPerWeek: parsedInput.shortenedHoursPerWeek || null,
+        // 공통
         note: parsedInput.note || null,
         submitterId: ctx.userId,
         status: "PENDING",

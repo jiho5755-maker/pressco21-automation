@@ -153,6 +153,7 @@ export const leaveStatusConfig: Record<string, BadgeConfig> = {
 
 // ── 정부지원사업 유형 Badge ──
 export const subsidyTypeConfig: Record<string, BadgeConfig> = {
+  // 기존 5가지 (Phase 2)
   FLEXIBLE_WORK: {
     label: "유연근무",
     className:
@@ -177,6 +178,32 @@ export const subsidyTypeConfig: Record<string, BadgeConfig> = {
     label: "인프라구축",
     className:
       "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300",
+  },
+  // 신규 5가지 (Phase 3-D)
+  MATERNITY_LEAVE_PAY: {
+    label: "출산휴가급여",
+    className:
+      "border-pink-200 bg-pink-50 text-pink-700 dark:border-pink-800 dark:bg-pink-950 dark:text-pink-300",
+  },
+  SPOUSE_MATERNITY_PAY: {
+    label: "배우자출산급여",
+    className:
+      "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:border-fuchsia-800 dark:bg-fuchsia-950 dark:text-fuchsia-300",
+  },
+  PARENTAL_LEAVE_PAY: {
+    label: "육아휴직급여",
+    className:
+      "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+  },
+  SHORTENED_WORK_HOURS_PAY: {
+    label: "육아기단축급여",
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  },
+  PREGNANCY_REDUCED_HOURS: {
+    label: "임신기단축급여",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
   },
 };
 

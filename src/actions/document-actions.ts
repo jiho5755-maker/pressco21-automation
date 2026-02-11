@@ -457,3 +457,59 @@ export const archiveDocument = adminActionClient
     revalidatePath("/documents");
     return { success: true, document: updated };
   });
+
+// ── 근로계약서 PDF 다운로드 스키마 ──
+const downloadContractSchema = z.object({
+  documentId: z.string(),
+});
+
+/**
+ * 근로계약서 PDF 다운로드 (base64 인코딩)
+ * @react-pdf/renderer로 서버에서 PDF 생성 후 base64 반환
+ */
+export const downloadEmploymentContract = authActionClient
+  .inputSchema(downloadContractSchema)
+  .action(async ({ parsedInput }) => {
+    // 1. 문서 조회
+    const document = await prisma.document.findUnique({
+      where: { id: parsedInput.documentId },
+      include: {
+        employee: {
+          include: { department: true },
+        },
+      },
+    });
+
+    if (!document) throw new ActionError("문서를 찾을 수 없습니다.");
+    if (document.type !== "EMPLOYMENT_CONTRACT") {
+      throw new ActionError("근로계약서 문서만 PDF 다운로드가 가능합니다.");
+    }
+
+    // 2. Content 파싱
+    const content = JSON.parse(document.content);
+
+    // 3. PDF 생성 (dynamic import)
+    const { renderToBuffer } = await import("@react-pdf/renderer");
+    const { EmploymentContractPDF } = await import(
+      "@/components/documents/employment-contract-pdf"
+    );
+    const React = await import("react");
+
+    const element = React.createElement(EmploymentContractPDF, {
+      employee: document.employee,
+      content,
+    });
+
+    // @react-pdf/renderer 타입과 React 19 타입 불일치 해결
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await (renderToBuffer as any)(element);
+
+    // 4. base64 인코딩
+    const base64 = Buffer.from(pdfBuffer).toString("base64");
+
+    return {
+      success: true,
+      base64,
+      fileName: `근로계약서_${document.employee.name}.pdf`,
+    };
+  });

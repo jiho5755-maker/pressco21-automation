@@ -395,3 +395,82 @@ NEXT_PUBLIC_APP_NAME=사내 자동화 도구       # 앱 이름 (UI에 표시)
 | haiku (낮음) | technical-writer | 문서 정리 |
 
 간단한 질문은 에이전트 없이 직접 답변한다. 에이전트는 전문성이 필요한 경우에만 호출.
+
+---
+
+## AI 에이전트 자동 라우팅 시스템
+
+### 자동 라우팅 규칙
+
+메인 에이전트(Claude Code)는 사용자의 자연어 요청을 분석하여 적절한 전문가 에이전트를 자동으로 호출한다.
+
+#### 단일 에이전트 호출 규칙
+
+| 키워드 패턴 | 호출 에이전트 | 예시 요청 |
+|------------|-------------|----------|
+| 연차, 휴가, 근로시간 | hr-labor-expert | "연차 계산 로직 검증해줘" |
+| 급여, 4대보험, 소득세 | payroll-tax-expert | "급여 계산이 정확한지 확인해줘" |
+| 지원금, 보조금 | employment-subsidy-expert | "받을 수 있는 지원금 알려줘" |
+| 아키텍처, 설계 | fullstack-architect | "이 기능의 설계를 해줘" |
+| DB, 스키마 | db-architect | "DB 스키마를 설계해줘" |
+| 보안, RBAC | security-auditor | "보안 취약점 점검해줘" |
+
+#### 오케스트레이션 트리거 (병렬 실행)
+
+사용자의 요청에 다음 키워드가 포함되면 여러 에이전트를 **동시에** 호출:
+
+| 트리거 | 호출 조합 | 예시 |
+|--------|----------|------|
+| "검증해줘", "리뷰해줘" | hr-labor + payroll-tax + security-auditor | "급여 시스템 전체 검증해줘" |
+| "전체 분석" | hr-labor + payroll-tax + accounting + employment-subsidy | "현재 시스템 전체 분석해줘" |
+| "계획 세워줘" | product-manager + fullstack-architect | "퇴직금 계산 기능 계획 세워줘" |
+
+#### 체이닝 트리거 (순차 실행)
+
+다음 요청은 자동으로 에이전트 체이닝이 발동:
+
+| 트리거 | 체인 순서 | 예시 |
+|--------|----------|------|
+| "새 기능 추가" | PM → Architect → DB → Code-Reviewer | "연차 관리 기능 추가해줘" |
+| "급여 로직 추가" | PM → payroll-tax → Architect → QA | "휴일근로 수당 계산 추가해줘" |
+
+### 사용 예시
+
+**예시 1: 자동 단일 에이전트 호출**
+```
+사용자: "연차 계산 로직이 맞는지 확인해줘"
+
+→ 자동 분석: 키워드 "연차", "계산"
+→ hr-labor-expert 호출
+→ 노무 관점 검증 결과 반환
+```
+
+**예시 2: 자동 오케스트레이션**
+```
+사용자: "급여 시스템을 전체적으로 검증해줘"
+
+→ 자동 분석: "급여", "전체", "검증"
+→ 3명 병렬 호출:
+  - hr-labor-expert (노무 관점)
+  - payroll-tax-expert (세무 관점)
+  - accounting-expert (회계 관점)
+→ 통합 보고서 생성
+```
+
+**예시 3: 자동 체이닝**
+```
+사용자: "퇴직금 자동 계산 기능을 추가해줘"
+
+→ 자동 분석: "기능 추가"
+→ 순차 실행:
+  1. product-manager (요구사항 정의)
+  2. payroll-tax-expert (퇴직금 계산 자문)
+  3. fullstack-architect (기술 설계)
+  4. code-reviewer (구현 후 리뷰)
+```
+
+### 참고 문서
+
+- [AI 회사 조직도](.claude/AI_COMPANY_ORGANIZATION.md): 16명 전문가 상세 정보
+- [에이전트 시스템 가이드](.claude/AGENT_SYSTEM_GUIDE.md): 체이닝/오케스트레이션 완벽 가이드
+- [라우팅 규칙 JSON](.claude/routing-rules.json): 전체 라우팅 규칙 상세

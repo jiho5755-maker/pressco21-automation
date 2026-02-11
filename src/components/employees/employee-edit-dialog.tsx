@@ -1,7 +1,7 @@
 "use client";
 
 // 직원 정보 수정 Dialog — 탭별 Zod + RHF 폼
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
@@ -47,6 +47,12 @@ import {
   updateEmployeeWork,
 } from "@/actions/employee-actions";
 import type { Department, Employee } from "@prisma/client";
+
+// 금액 포맷팅
+function formatCurrency(amount: number | undefined): string {
+  if (amount === undefined || amount === null) return "0";
+  return amount.toLocaleString("ko-KR");
+}
 
 interface EmployeeEditDialogProps {
   employee: Employee & { department: Department };
@@ -367,9 +373,61 @@ export function EmployeeEditDialog({
 
   // ── 총 급여 계산 (고정OT 포함) ──
   const useFixedOTWatch = salaryForm.watch("useFixedOT");
+  const fixedOTHoursWatch = salaryForm.watch("fixedOTHours");
   const fixedOTAmountWatch = salaryForm.watch("fixedOTAmount");
   const fixedNightWorkAmountWatch = salaryForm.watch("fixedNightWorkAmount");
   const fixedHolidayWorkAmountWatch = salaryForm.watch("fixedHolidayWorkAmount");
+
+  // ── 고정OT 자동 계산 ──
+  const lastChangedFieldRef = useRef<"hours" | "amount" | null>(null);
+
+  // 통상시급 계산 (근로기준법 기준)
+  // 통상임금 = 기본급 + 식대 + 교통비 + 직책수당 (전액 포함)
+  // 비과세 여부는 소득세 계산에만 영향, 통상임금과는 무관
+  const calculateHourlyRate = () => {
+    const base = baseSalaryWatch || 0;
+    const meal = mealAllowanceWatch || 0;
+    const transport = transportAllowanceWatch || 0;
+    const position = positionAllowanceWatch || 0;
+
+    // 통상임금 = 정기적·일률적으로 지급되는 모든 수당 포함
+    const regularWage = base + meal + transport + position;
+
+    // 통상시급 계산: 소수점 절사 (회계사 급여대장 일치)
+    return Math.floor(regularWage / 209);
+  };
+
+  // fixedOTHours 변경 시 → fixedOTAmount 자동 계산
+  useEffect(() => {
+    if (
+      lastChangedFieldRef.current === "hours" &&
+      useFixedOTWatch &&
+      fixedOTHoursWatch
+    ) {
+      const hourlyRate = calculateHourlyRate();
+      // 고정OT 금액 계산: 백의 자리 단위로 절사 (회계사 급여대장 일치)
+      const calculatedAmount = Math.floor((hourlyRate * 1.5 * fixedOTHoursWatch) / 100) * 100;
+      salaryForm.setValue("fixedOTAmount", calculatedAmount);
+    }
+  }, [fixedOTHoursWatch, baseSalaryWatch, mealAllowanceWatch, transportAllowanceWatch, positionAllowanceWatch]);
+
+  // fixedOTAmount 변경 시 → fixedOTHours 역산
+  useEffect(() => {
+    if (
+      lastChangedFieldRef.current === "amount" &&
+      useFixedOTWatch &&
+      fixedOTAmountWatch
+    ) {
+      const hourlyRate = calculateHourlyRate();
+      if (hourlyRate > 0) {
+        // 역산 시에도 십의 자리 단위 고려 (회계사 급여대장 일치)
+        const calculatedHours = Math.round(
+          fixedOTAmountWatch / (hourlyRate * 1.5)
+        );
+        salaryForm.setValue("fixedOTHours", calculatedHours);
+      }
+    }
+  }, [fixedOTAmountWatch]);
 
   const baseGross =
     (baseSalaryWatch || 0) +
@@ -979,14 +1037,22 @@ export function EmployeeEditDialog({
                                   placeholder="20"
                                   {...field}
                                   value={field.value || ""}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
+                                    lastChangedFieldRef.current = "hours";
                                     field.onChange(
                                       e.target.value ? Number(e.target.value) : 0
-                                    )
-                                  }
+                                    );
+                                  }}
                                 />
                               </FormControl>
-                              <FormDescription>월 최대 52시간</FormDescription>
+                              <FormDescription>
+                                예: 20시간 또는 30시간
+                                {(fixedOTHoursWatch ?? 0) > 0 && (
+                                  <span className="block text-primary mt-1">
+                                    → 자동 계산: {formatCurrency(fixedOTAmountWatch ?? 0)}원
+                                  </span>
+                                )}
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -1004,15 +1070,21 @@ export function EmployeeEditDialog({
                                   placeholder="310000"
                                   {...field}
                                   value={field.value || ""}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
+                                    lastChangedFieldRef.current = "amount";
                                     field.onChange(
                                       e.target.value ? Number(e.target.value) : 0
-                                    )
-                                  }
+                                    );
+                                  }}
                                 />
                               </FormControl>
                               <FormDescription>
-                                통상시급 × 1.5 × 시간 이상
+                                예: 315,780원 또는 495,210원
+                                {(fixedOTAmountWatch ?? 0) > 0 && (
+                                  <span className="block text-primary mt-1">
+                                    → 자동 계산: {fixedOTHoursWatch ?? 0}시간
+                                  </span>
+                                )}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>

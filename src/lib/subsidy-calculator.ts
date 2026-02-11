@@ -1,9 +1,12 @@
-// 정부지원사업 자격 판단 유틸리티 (Phase 2)
+// 정부지원사업 자격 판단 유틸리티 (Phase 2 + Phase 3-D)
 // 패턴: leave-calculator.ts, salary-calculator.ts와 동일하게 순수 함수로 구현
 
 import { prisma } from "@/lib/prisma";
-import { GOVERNMENT_SUBSIDIES_2026 } from "@/lib/constants";
-import { differenceInMonths } from "date-fns";
+import {
+  GOVERNMENT_SUBSIDIES_2026,
+  MATERNITY_SUBSIDIES_2026,
+} from "@/lib/constants";
+import { differenceInMonths, differenceInDays, addMonths } from "date-fns";
 
 /**
  * 지원금 자격 판단 결과 타입
@@ -355,4 +358,286 @@ export async function checkDuplicateApplication(
   });
 
   return !!existing;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 3-D: 출산육아 지원금 4가지
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 6. 출산전후휴가 급여 자격 판단 (고용보험법 제75조)
+ *
+ * 조건:
+ * - 출산전후휴가 90일 (다태아 120일)
+ * - 출산 후 최소 45일 휴가 필수
+ * - 급여: 첫 달 100% (상한 200만), 둘째 달 이후 80% (상한 160만)
+ *
+ * @param childBirthDate 자녀 출생일
+ * @param startDate 휴가 시작일
+ * @param endDate 휴가 종료일
+ * @param monthlySalary 월 급여 (통상임금)
+ * @returns 자격 판단 결과 (총 급여액)
+ */
+export function checkMaternityLeavePayEligibility(
+  childBirthDate: Date,
+  startDate: Date,
+  endDate: Date,
+  monthlySalary: number
+): SubsidyEligibility {
+  const {
+    duration,
+    postBirthMinDays,
+    firstMonthRate,
+    secondMonthOnwardRate,
+    firstMonthCap,
+    secondMonthCap,
+  } = MATERNITY_SUBSIDIES_2026.maternityLeavePay;
+
+  // 조건 1: 휴가 기간 확인 (90일)
+  const durationDays = differenceInDays(endDate, startDate) + 1;
+  if (durationDays !== duration) {
+    return {
+      eligible: false,
+      reason: `출산전후휴가는 ${duration}일이어야 합니다. (현재: ${durationDays}일)`,
+      calculatedAmount: 0,
+    };
+  }
+
+  // 조건 2: 출산 후 최소 45일 휴가 확인
+  const daysAfterBirth = differenceInDays(endDate, childBirthDate);
+  if (daysAfterBirth < postBirthMinDays) {
+    return {
+      eligible: false,
+      reason: `출산 후 최소 ${postBirthMinDays}일 휴가가 필요합니다. (현재: ${daysAfterBirth}일)`,
+      calculatedAmount: 0,
+    };
+  }
+
+  // 급여 계산: 첫 달 100%, 둘째 달 이후 80%
+  const firstMonthPay = Math.min(monthlySalary * firstMonthRate, firstMonthCap);
+  const secondMonthPay = Math.min(
+    monthlySalary * secondMonthOnwardRate,
+    secondMonthCap
+  );
+  const thirdMonthPay = Math.min(
+    monthlySalary * secondMonthOnwardRate,
+    secondMonthCap
+  );
+
+  const totalPay = firstMonthPay + secondMonthPay + thirdMonthPay;
+
+  return {
+    eligible: true,
+    calculatedAmount: Math.round(totalPay),
+    details: {
+      durationDays,
+      daysAfterBirth,
+      firstMonthPay: Math.round(firstMonthPay),
+      secondMonthPay: Math.round(secondMonthPay),
+      thirdMonthPay: Math.round(thirdMonthPay),
+    },
+  };
+}
+
+/**
+ * 7. 배우자 출산휴가 급여 자격 판단 (고용보험법 제76조의2)
+ *
+ * 조건:
+ * - 배우자 출산 시 20일 유급 휴가
+ * - 통상임금의 100% (일 상한 10만원)
+ *
+ * @param childBirthDate 자녀 출생일
+ * @param monthlySalary 월 급여 (통상임금)
+ * @returns 자격 판단 결과 (총 급여액)
+ */
+export function checkSpouseMaternityPayEligibility(
+  childBirthDate: Date,
+  monthlySalary: number
+): SubsidyEligibility {
+  const { duration, dailyRate, dailyCap } =
+    MATERNITY_SUBSIDIES_2026.spouseMaternityPay;
+
+  // 일 통상임금 계산 (월 급여 / 209시간 × 8시간)
+  const dailyWage = (monthlySalary / 209) * 8;
+
+  // 일 급여 = min(일 통상임금, 상한 10만원)
+  const dailyPay = Math.min(dailyWage * dailyRate, dailyCap);
+
+  // 총 급여 = 일 급여 × 20일
+  const totalPay = dailyPay * duration;
+
+  return {
+    eligible: true,
+    calculatedAmount: Math.round(totalPay),
+    details: {
+      duration,
+      dailyWage: Math.round(dailyWage),
+      dailyPay: Math.round(dailyPay),
+    },
+  };
+}
+
+/**
+ * 8. 육아휴직 급여 자격 판단 (고용보험법 제70조)
+ *
+ * 조건:
+ * - 자녀 출생 후 18개월 이내
+ * - 최대 12개월 지급
+ * - 급여의 80% (상한 160만원/월, 하한 70만원/월)
+ *
+ * @param childBirthDate 자녀 출생일
+ * @param startDate 육아휴직 시작일
+ * @param endDate 육아휴직 종료일
+ * @param monthlySalary 월 급여
+ * @returns 자격 판단 결과 (총 급여액)
+ */
+export function checkParentalLeavePayEligibility(
+  childBirthDate: Date,
+  startDate: Date,
+  endDate: Date,
+  monthlySalary: number
+): SubsidyEligibility {
+  const { maxMonths, paymentRate, monthlyMax, monthlyMin } =
+    MATERNITY_SUBSIDIES_2026.parentalLeavePay;
+
+  // 조건 1: 자녀 출생 후 18개월 이내 신청
+  const childAgeAtStart = differenceInMonths(startDate, childBirthDate);
+  if (childAgeAtStart > 18) {
+    return {
+      eligible: false,
+      reason: "자녀 출생 후 18개월 이내에 신청해야 합니다.",
+      calculatedAmount: 0,
+    };
+  }
+
+  // 조건 2: 최대 12개월
+  const durationMonths = Math.round(
+    differenceInMonths(addMonths(endDate, 1), startDate)
+  );
+  if (durationMonths > maxMonths) {
+    return {
+      eligible: false,
+      reason: `육아휴직은 최대 ${maxMonths}개월까지 지원됩니다. (현재: ${durationMonths}개월)`,
+      calculatedAmount: 0,
+    };
+  }
+
+  // 월 급여 계산 (80%, 상한/하한 적용)
+  const monthlyPay = Math.min(
+    Math.max(monthlySalary * paymentRate, monthlyMin),
+    monthlyMax
+  );
+
+  // 총 급여 = 월 급여 × 개월 수
+  const totalPay = monthlyPay * durationMonths;
+
+  return {
+    eligible: true,
+    calculatedAmount: Math.round(totalPay),
+    details: {
+      durationMonths,
+      childAgeAtStart,
+      monthlyPay: Math.round(monthlyPay),
+    },
+  };
+}
+
+/**
+ * 9. 육아기 근로시간 단축 급여 자격 판단 (고용보험법 제73조의2)
+ *
+ * 조건:
+ * - 자녀 만 8세 이하
+ * - 주당 5~15시간 단축
+ * - 최대 24개월
+ * - 단축 시간별 차등 급여 (5시간: 40만, 10시간: 50만, 15시간: 60만)
+ *
+ * @param childBirthDate 자녀 출생일
+ * @param shortenedHoursPerWeek 단축 시간 (주당)
+ * @returns 자격 판단 결과 (월 급여)
+ */
+export function checkShortenedWorkHoursPayEligibility(
+  childBirthDate: Date,
+  shortenedHoursPerWeek: number
+): SubsidyEligibility {
+  const { maxHoursPerWeek, minHoursPerWeek, monthlyPayByHours } =
+    MATERNITY_SUBSIDIES_2026.shortenedWorkHoursPay;
+
+  // 조건 1: 자녀 만 8세 이하
+  const childAge = calculateAge(childBirthDate);
+  if (childAge > 8) {
+    return {
+      eligible: false,
+      reason: "자녀가 만 8세 이하여야 합니다.",
+      calculatedAmount: 0,
+    };
+  }
+
+  // 조건 2: 주당 단축 시간 5~15시간
+  if (
+    shortenedHoursPerWeek < minHoursPerWeek ||
+    shortenedHoursPerWeek > maxHoursPerWeek
+  ) {
+    return {
+      eligible: false,
+      reason: `주당 단축 시간은 ${minHoursPerWeek}~${maxHoursPerWeek}시간이어야 합니다. (현재: ${shortenedHoursPerWeek}시간)`,
+      calculatedAmount: 0,
+    };
+  }
+
+  // 단축 시간별 월 급여 결정
+  let monthlyPay = 0;
+  if (shortenedHoursPerWeek >= 15) {
+    monthlyPay = monthlyPayByHours[15];
+  } else if (shortenedHoursPerWeek >= 10) {
+    monthlyPay = monthlyPayByHours[10];
+  } else {
+    monthlyPay = monthlyPayByHours[5];
+  }
+
+  return {
+    eligible: true,
+    calculatedAmount: monthlyPay,
+    details: {
+      childAge,
+      shortenedHoursPerWeek,
+      monthlyPay,
+    },
+  };
+}
+
+/**
+ * 10. 임신기 근로시간 단축 급여 자격 판단 (고용보험법 제76조의3)
+ *
+ * 조건:
+ * - 임신 확인서 제출
+ * - 주당 최대 10시간 단축
+ * - 월 80만원 (고정)
+ * - 최대 12개월
+ *
+ * @param shortenedHoursPerWeek 단축 시간 (주당)
+ * @returns 자격 판단 결과 (월 급여)
+ */
+export function checkPregnancyReducedHoursEligibility(
+  shortenedHoursPerWeek: number
+): SubsidyEligibility {
+  const { maxHoursPerWeek, monthlyPay } =
+    MATERNITY_SUBSIDIES_2026.pregnancyReducedHours;
+
+  // 조건: 주당 단축 시간 1~10시간
+  if (shortenedHoursPerWeek < 1 || shortenedHoursPerWeek > maxHoursPerWeek) {
+    return {
+      eligible: false,
+      reason: `주당 단축 시간은 1~${maxHoursPerWeek}시간이어야 합니다. (현재: ${shortenedHoursPerWeek}시간)`,
+      calculatedAmount: 0,
+    };
+  }
+
+  return {
+    eligible: true,
+    calculatedAmount: monthlyPay,
+    details: {
+      shortenedHoursPerWeek,
+      monthlyPay,
+    },
+  };
 }

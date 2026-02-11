@@ -46,11 +46,18 @@ interface SubsidyFormDialogProps {
 // Zod 스키마 (유형별 조건부 필드)
 const baseSchema = z.object({
   type: z.enum([
+    // 기존 5가지 (Phase 2)
     "FLEXIBLE_WORK",
     "REPLACEMENT_WORKER",
     "PARENTAL_LEAVE_GRANT",
     "WORK_SHARING",
     "INFRA_SUPPORT",
+    // 신규 5가지 (Phase 3-D)
+    "MATERNITY_LEAVE_PAY",
+    "SPOUSE_MATERNITY_PAY",
+    "PARENTAL_LEAVE_PAY",
+    "SHORTENED_WORK_HOURS_PAY",
+    "PREGNANCY_REDUCED_HOURS",
   ]),
   year: z.number().int().min(2020).max(2099),
   month: z.number().int().min(1).max(12),
@@ -86,12 +93,58 @@ const infraSupportSchema = baseSchema.extend({
   type: z.literal("INFRA_SUPPORT"),
 });
 
+// Phase 3-D: 출산육아 지원금 5가지
+const maternityLeavePaySchema = baseSchema.extend({
+  type: z.literal("MATERNITY_LEAVE_PAY"),
+  childBirthDate: z.string().min(1, "자녀 출생일을 선택해주세요."),
+  maternityLeaveStartDate: z.string().min(1, "휴가 시작일을 선택해주세요."),
+  maternityLeaveEndDate: z.string().min(1, "휴가 종료일을 선택해주세요."),
+});
+
+const spouseMaternityPaySchema = baseSchema.extend({
+  type: z.literal("SPOUSE_MATERNITY_PAY"),
+  childBirthDate: z.string().min(1, "자녀 출생일을 선택해주세요."),
+});
+
+const parentalLeavePaySchema = baseSchema.extend({
+  type: z.literal("PARENTAL_LEAVE_PAY"),
+  childBirthDate: z.string().min(1, "자녀 출생일을 선택해주세요."),
+  parentalLeaveStartDate: z.string().min(1, "육아휴직 시작일을 선택해주세요."),
+  parentalLeaveEndDate: z.string().min(1, "육아휴직 종료일을 선택해주세요."),
+});
+
+const shortenedWorkHoursPaySchema = baseSchema.extend({
+  type: z.literal("SHORTENED_WORK_HOURS_PAY"),
+  childBirthDate: z.string().min(1, "자녀 출생일을 선택해주세요."),
+  shortenedHoursPerWeek: z
+    .number()
+    .int()
+    .min(5, "주당 최소 5시간 단축")
+    .max(15, "주당 최대 15시간 단축"),
+});
+
+const pregnancyReducedHoursSchema = baseSchema.extend({
+  type: z.literal("PREGNANCY_REDUCED_HOURS"),
+  shortenedHoursPerWeek: z
+    .number()
+    .int()
+    .min(1, "주당 최소 1시간 단축")
+    .max(10, "주당 최대 10시간 단축"),
+});
+
 const subsidyFormSchema = z.discriminatedUnion("type", [
+  // 기존 5가지
   flexibleWorkSchema,
   replacementWorkerSchema,
   parentalLeaveGrantSchema,
   workSharingSchema,
   infraSupportSchema,
+  // 신규 5가지 (Phase 3-D)
+  maternityLeavePaySchema,
+  spouseMaternityPaySchema,
+  parentalLeavePaySchema,
+  shortenedWorkHoursPaySchema,
+  pregnancyReducedHoursSchema,
 ]);
 
 type SubsidyFormData = z.infer<typeof subsidyFormSchema>;
@@ -163,6 +216,7 @@ export function SubsidyFormDialog({ employees }: SubsidyFormDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* 기존 5개 (Phase 2) */}
                       <SelectItem value="FLEXIBLE_WORK">
                         유연근무 장려금
                       </SelectItem>
@@ -177,6 +231,23 @@ export function SubsidyFormDialog({ employees }: SubsidyFormDialogProps) {
                       </SelectItem>
                       <SelectItem value="INFRA_SUPPORT">
                         유연근무 인프라 구축비
+                      </SelectItem>
+
+                      {/* 신규 5개 (Phase 3-D) */}
+                      <SelectItem value="MATERNITY_LEAVE_PAY">
+                        출산전후휴가 급여
+                      </SelectItem>
+                      <SelectItem value="SPOUSE_MATERNITY_PAY">
+                        배우자 출산휴가 급여
+                      </SelectItem>
+                      <SelectItem value="PARENTAL_LEAVE_PAY">
+                        육아휴직 급여
+                      </SelectItem>
+                      <SelectItem value="SHORTENED_WORK_HOURS_PAY">
+                        육아기 근로시간 단축 급여
+                      </SelectItem>
+                      <SelectItem value="PREGNANCY_REDUCED_HOURS">
+                        임신기 근로시간 단축 급여
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -389,6 +460,193 @@ export function SubsidyFormDialog({ employees }: SubsidyFormDialogProps) {
                     </FormControl>
                     <FormDescription>
                       출생일 기준 18개월 이내 신청 가능
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Phase 3-D: 출산육아 지원금 조건부 필드 */}
+            {selectedType === "MATERNITY_LEAVE_PAY" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="childBirthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>자녀 출생일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maternityLeaveStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>출산휴가 시작일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maternityLeaveEndDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>출산휴가 종료일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        출산전후휴가는 90일이며, 출산 후 최소 45일 휴가 필요
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {selectedType === "SPOUSE_MATERNITY_PAY" && (
+              <FormField
+                control={form.control}
+                name="childBirthDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>자녀 출생일</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      배우자 출산휴가는 20일 (통상임금의 100%, 일 상한 10만원)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {selectedType === "PARENTAL_LEAVE_PAY" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="childBirthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>자녀 출생일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="parentalLeaveStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>육아휴직 시작일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="parentalLeaveEndDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>육아휴직 종료일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        최대 12개월, 급여의 80% (상한 160만원/월, 하한 70만원/월)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {selectedType === "SHORTENED_WORK_HOURS_PAY" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="childBirthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>자녀 출생일</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        자녀가 만 8세 이하여야 합니다.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="shortenedHoursPerWeek"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>주당 단축 시간</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={5}
+                          max={15}
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        5~15시간 단축 가능 (5시간: 40만원, 10시간: 50만원,
+                        15시간: 60만원/월)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {selectedType === "PREGNANCY_REDUCED_HOURS" && (
+              <FormField
+                control={form.control}
+                name="shortenedHoursPerWeek"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>주당 단축 시간</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      1~10시간 단축 가능 (월 80만원 고정)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

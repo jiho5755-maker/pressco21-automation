@@ -437,6 +437,18 @@ model SubsidyApplication {
   childBirthDate        DateTime? // 자녀 출생일
   childAgeAtApplication Int? // 신청 시점 자녀 연령 (개월)
 
+  // ── 출산육아 지원금 전용 필드 (Phase 3-D) ──
+  // 출산전후휴가 급여: 휴가 기간
+  maternityLeaveStartDate DateTime? // 출산휴가 시작일
+  maternityLeaveEndDate   DateTime? // 출산휴가 종료일
+
+  // 육아휴직 급여: 휴직 기간
+  parentalLeaveStartDate DateTime? // 육아휴직 시작일
+  parentalLeaveEndDate   DateTime? // 육아휴직 종료일
+
+  // 육아기/임신기 근로시간 단축: 단축 시간
+  shortenedHoursPerWeek Int? // 단축 시간 (주당, 시간 단위)
+
   // ── 결재 상태 ──
   status String @default("PENDING") // "PENDING"|"APPROVED"|"REJECTED"|"PAID"
 
