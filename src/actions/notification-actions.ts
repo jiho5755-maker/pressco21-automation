@@ -17,8 +17,15 @@ import type { NotificationResult } from "@/types/notification";
 import SubsidyDeadlineReminder from "@/emails/subsidy-deadline-reminder";
 import { SUBSIDY_TYPES } from "@/lib/constants";
 
-// Resend 클라이언트 초기화
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend 클라이언트 초기화 함수 (런타임 지연 초기화)
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error(
+      "RESEND_API_KEY 환경변수가 설정되지 않았습니다. 이메일 발송을 위해 Resend API 키를 설정해주세요."
+    );
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // 이메일 발신자 정보
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "PRESSCO21 <admin@pressco21.com>";
@@ -109,7 +116,7 @@ export async function sendSubsidyDeadlineReminder(
     );
 
     // 5. 이메일 발송
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: FROM_EMAIL,
       to: employee.email,
       subject: `[긴급] ${subsidyTypeName} 신청 마감 D-${dDay}일 전`,
@@ -335,7 +342,7 @@ export async function sendApprovalRequest(
     );
 
     // 5. 이메일 발송
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: FROM_EMAIL,
       to: approver.email,
       subject: `[결재 요청] ${documentTypeName} - ${document.creator?.employee?.name || "알 수 없음"}`,
@@ -544,7 +551,7 @@ export async function sendApprovalResult(
     }
 
     // 6. 이메일 발송
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: FROM_EMAIL,
       to: creator.email,
       subject,
@@ -590,6 +597,241 @@ export async function sendApprovalResult(
     return {
       success: false,
       error: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
+}
+
+// ============================================================================
+// Phase 3-D-3: 급여명세서 이메일 발송
+// ============================================================================
+
+/**
+ * 급여명세서 이메일 발송
+ *
+ * PayrollRecord 생성 후 직원에게 급여명세서 발송
+ *
+ * @param payrollRecordId - PayrollRecord ID
+ * @returns 발송 결과 (성공 여부, 오류 메시지, 이메일 ID)
+ *
+ * @example
+ * ```ts
+ * await sendPayrollStatementNotification("cm6g2a8h100006gbqf5fkgjfx");
+ * ```
+ */
+export async function sendPayrollStatementNotification(
+  payrollRecordId: string
+): Promise<NotificationResult> {
+  try {
+    // 1. PayrollRecord 조회 (직원 정보 포함)
+    const payrollRecord = await prisma.payrollRecord.findUnique({
+      where: { id: payrollRecordId },
+      include: {
+        employee: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!payrollRecord) {
+      return {
+        success: false,
+        error: "급여 기록을 찾을 수 없습니다.",
+      };
+    }
+
+    if (!payrollRecord.employee.email) {
+      return {
+        success: false,
+        error: "직원의 이메일 주소가 없습니다.",
+      };
+    }
+
+    // 2. 지급일 (해당 월의 25일)
+    const paymentDate = format(
+      new Date(payrollRecord.year, payrollRecord.month - 1, 25),
+      "yyyy-MM-dd"
+    );
+
+    // 3. 이메일 HTML 생성
+    const PayrollStatement = (await import("@/emails/payroll-statement")).default;
+
+    const emailHtml = await render(
+      PayrollStatement({
+        employeeName: payrollRecord.employee.name,
+        year: payrollRecord.year,
+        month: payrollRecord.month,
+        paymentDate,
+
+        // 급여 구성
+        baseSalary: payrollRecord.baseSalary,
+        mealAllowance: payrollRecord.mealAllowance,
+        transportAllowance: payrollRecord.transportAllowance,
+        positionAllowance: payrollRecord.positionAllowance,
+
+        // 고정OT
+        fixedOTAmount: payrollRecord.fixedOTAmount,
+        fixedNightWorkAmount: payrollRecord.fixedNightWorkAmount,
+        fixedHolidayWorkAmount: payrollRecord.fixedHolidayWorkAmount,
+
+        // 변동 수당
+        variableOvertimeAmount: payrollRecord.variableOvertimeAmount,
+        variableNightWorkAmount: payrollRecord.variableNightWorkAmount,
+        variableHolidayWorkAmount: payrollRecord.variableHolidayWorkAmount,
+
+        // 급여 합계
+        totalGross: payrollRecord.totalGross,
+        totalTaxable: payrollRecord.totalTaxable,
+
+        // 공제 항목
+        nationalPension: payrollRecord.nationalPension,
+        healthInsurance: payrollRecord.healthInsurance,
+        longTermCare: payrollRecord.longTermCare,
+        employmentInsurance: payrollRecord.employmentInsurance,
+        totalInsurance: payrollRecord.totalInsurance,
+        incomeTax: payrollRecord.incomeTax,
+        localIncomeTax: payrollRecord.localIncomeTax,
+
+        // 실수령액
+        netSalary: payrollRecord.netSalary,
+      })
+    );
+
+    // 4. 이메일 발송
+    const result = await getResendClient().emails.send({
+      from: FROM_EMAIL,
+      to: payrollRecord.employee.email,
+      subject: `[급여명세서] ${payrollRecord.year}년 ${payrollRecord.month}월 급여가 지급되었습니다.`,
+      html: emailHtml,
+    });
+
+    // 5. 발송 결과 처리
+    if (result.error) {
+      console.error("[급여명세서 이메일 발송 실패]", {
+        payrollRecordId,
+        employeeName: payrollRecord.employee.name,
+        error: result.error,
+      });
+
+      return {
+        success: false,
+        error: `이메일 발송 실패: ${result.error.message}`,
+      };
+    }
+
+    console.log("[급여명세서 이메일 발송 성공]", {
+      payrollRecordId,
+      employeeName: payrollRecord.employee.name,
+      year: payrollRecord.year,
+      month: payrollRecord.month,
+      emailId: result.data?.id,
+    });
+
+    return {
+      success: true,
+      emailId: result.data?.id,
+    };
+  } catch (error) {
+    console.error("[sendPayrollStatementNotification 오류]", {
+      payrollRecordId,
+      error,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
+}
+
+/**
+ * 배치 급여명세서 발송 (관리자 전용)
+ *
+ * 특정 연월의 모든 급여 기록에 대해 이메일 일괄 발송
+ *
+ * @param year - 귀속 연도
+ * @param month - 귀속 월
+ * @returns 발송 결과 요약
+ *
+ * @example
+ * ```ts
+ * await sendBatchPayrollStatements(2026, 2);
+ * ```
+ */
+export async function sendBatchPayrollStatements(
+  year: number,
+  month: number
+): Promise<{
+  success: boolean;
+  totalSent: number;
+  totalFailed: number;
+  errors: string[];
+}> {
+  try {
+    // 1. 해당 연월의 모든 PayrollRecord 조회
+    const payrollRecords = await prisma.payrollRecord.findMany({
+      where: {
+        year,
+        month,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (payrollRecords.length === 0) {
+      console.log("[배치 급여명세서 발송] 대상 없음", { year, month });
+      return {
+        success: true,
+        totalSent: 0,
+        totalFailed: 0,
+        errors: [],
+      };
+    }
+
+    // 2. 일괄 발송
+    const results = await Promise.allSettled(
+      payrollRecords.map((record) => sendPayrollStatementNotification(record.id))
+    );
+
+    const successCount = results.filter(
+      (r) => r.status === "fulfilled" && r.value.success
+    ).length;
+    const failedCount = results.length - successCount;
+
+    const errors = results
+      .filter((r) => r.status === "fulfilled" && !r.value.success)
+      .map((r) => (r.status === "fulfilled" ? r.value.error : "알 수 없는 오류"))
+      .filter((e): e is string => !!e);
+
+    console.log("[배치 급여명세서 발송 완료]", {
+      year,
+      month,
+      total: results.length,
+      success: successCount,
+      failed: failedCount,
+    });
+
+    return {
+      success: failedCount === 0,
+      totalSent: successCount,
+      totalFailed: failedCount,
+      errors,
+    };
+  } catch (error) {
+    console.error("[sendBatchPayrollStatements 오류]", {
+      year,
+      month,
+      error,
+    });
+
+    return {
+      success: false,
+      totalSent: 0,
+      totalFailed: 0,
+      errors: [error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다."],
     };
   }
 }
