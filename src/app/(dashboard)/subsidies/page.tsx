@@ -57,8 +57,13 @@ export default async function SubsidiesPage() {
   };
 
   // 4. 직원 목록 (신청 폼용)
+  // 대상 직원 조회 (ACTIVE + ON_LEAVE 포함)
+  // REPLACEMENT_WORKER 유형은 휴직자가 필수이므로 ON_LEAVE도 조회
   const employees = await prisma.employee.findMany({
-    where: { status: "ACTIVE", ...employeeFilter },
+    where: {
+      status: { in: ["ACTIVE", "ON_LEAVE"] },
+      ...employeeFilter,
+    },
     include: { department: true },
     orderBy: { name: "asc" },
   });

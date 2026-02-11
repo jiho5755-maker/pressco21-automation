@@ -254,14 +254,37 @@ export function SubsidyFormDialog({ employees }: SubsidyFormDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.name} ({emp.employeeNo}) -{" "}
-                          {emp.department.name}
-                        </SelectItem>
-                      ))}
+                      {employees
+                        .filter((emp) => {
+                          // 대체인력 지원금: 휴직자만 (MATERNITY/PARENTAL)
+                          if (selectedType === "REPLACEMENT_WORKER") {
+                            return (
+                              emp.status === "ON_LEAVE" &&
+                              (emp.leaveType === "MATERNITY" ||
+                                emp.leaveType === "PARENTAL")
+                            );
+                          }
+                          // 다른 지원금: ACTIVE 직원만
+                          return emp.status === "ACTIVE";
+                        })
+                        .map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.name} ({emp.employeeNo}) -{" "}
+                            {emp.department.name}
+                            {emp.status === "ON_LEAVE" && (
+                              <span className="text-muted-foreground ml-1">
+                                (휴직 중)
+                              </span>
+                            )}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
+                  {selectedType === "REPLACEMENT_WORKER" && (
+                    <FormDescription className="text-amber-600">
+                      출산휴가 또는 육아휴직 중인 직원만 표시됩니다.
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
