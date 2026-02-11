@@ -86,6 +86,33 @@ export const SUBSIDY_STATUS = {
   PAID: "지급완료",
 } as const;
 
+// ── 문서 유형 (Phase 3) ──
+export const DOCUMENT_TYPES = {
+  EMPLOYMENT_CONTRACT: "근로계약서",
+  PAYSLIP: "임금명세서",
+  RESIGNATION: "퇴직서류",
+  NOTICE: "공지사항",
+  OTHER: "기타",
+} as const;
+
+// ── 문서 상태 (Phase 3) ──
+export const DOCUMENT_STATUS = {
+  DRAFT: "초안",
+  PENDING_APPROVAL: "결재요청",
+  APPROVED: "결재완료",
+  REJECTED: "반려",
+  ISSUED: "발급완료",
+  ARCHIVED: "보관",
+} as const;
+
+// ── 결재 상태 (Phase 3) ──
+export const APPROVAL_STATUS = {
+  PENDING: "대기",
+  APPROVED: "승인",
+  REJECTED: "반려",
+  SKIPPED: "후속생략",
+} as const;
+
 // ── 사용자 역할 ──
 export const USER_ROLES = {
   ADMIN: "admin",

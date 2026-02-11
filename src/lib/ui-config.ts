@@ -203,3 +203,90 @@ export const subsidyStatusConfig: Record<string, BadgeConfig> = {
       "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
   },
 };
+
+// ── 문서 유형 Badge (Phase 3) ──
+export const documentTypeConfig: Record<string, BadgeConfig> = {
+  EMPLOYMENT_CONTRACT: {
+    label: "근로계약서",
+    className:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  },
+  PAYSLIP: {
+    label: "임금명세서",
+    className:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+  },
+  RESIGNATION: {
+    label: "퇴직서류",
+    className:
+      "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300",
+  },
+  NOTICE: {
+    label: "공지사항",
+    className:
+      "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+  },
+  OTHER: {
+    label: "기타",
+    className:
+      "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
+  },
+};
+
+// ── 문서 상태 Badge (Phase 3) ──
+export const documentStatusConfig: Record<string, BadgeConfig> = {
+  DRAFT: {
+    label: "초안",
+    className:
+      "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
+  },
+  PENDING_APPROVAL: {
+    label: "결재요청",
+    className:
+      "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+  },
+  APPROVED: {
+    label: "결재완료",
+    className:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+  },
+  REJECTED: {
+    label: "반려",
+    className:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  },
+  ISSUED: {
+    label: "발급완료",
+    className:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  },
+  ARCHIVED: {
+    label: "보관",
+    className:
+      "border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400",
+  },
+};
+
+// ── 결재 상태 Badge (Phase 3) ──
+export const approvalStatusConfig: Record<string, BadgeConfig> = {
+  PENDING: {
+    label: "대기",
+    className:
+      "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+  },
+  APPROVED: {
+    label: "승인",
+    className:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+  },
+  REJECTED: {
+    label: "반려",
+    className:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  },
+  SKIPPED: {
+    label: "후속생략",
+    className:
+      "border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500",
+  },
+};

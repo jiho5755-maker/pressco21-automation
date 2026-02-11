@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -31,6 +31,11 @@ model User {
   approvedLeaves     LeaveRecord[]         @relation("LeaveApprover")
   submittedSubsidies SubsidyApplication[] @relation("SubsidySubmitter")
   approvedSubsidies  SubsidyApplication[] @relation("SubsidyApprover")
+
+  // Phase 3: 문서/전자결재
+  createdDocuments    Document[]   @relation("DocumentCreator")
+  approvals           Approval[]
+  uploadedAttachments Attachment[]
 
   employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
 
@@ -188,6 +193,7 @@ model Employee {
   payrollRecords             PayrollRecord[]
   subsidyApplications        SubsidyApplication[]
   replacementWorkerSubsidies SubsidyApplication[] @relation("ReplacementWorker")
+  documents                  Document[] // Phase 3: 문서 관리
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -464,4 +470,123 @@ model SubsidyApplication {
   @@index([type, status]) // 유형별 상태 필터링
   @@index([status, submittedAt]) // 대기 중인 신청 목록
   @@index([year, month, status]) // 월별 통계
+}
+
+// ─────────────────────────────────────────────
+// 문서 관리 (Phase 3: 행정/문서/전자결재)
+// ─────────────────────────────────────────────
+
+model Document {
+  id String @id @default(cuid())
+
+  // ── 문서 기본 정보 ──
+  title String // "근로계약서", "임금명세서", "공지사항" 등
+  type  String // "EMPLOYMENT_CONTRACT"|"PAYSLIP"|"RESIGNATION"|"NOTICE"|"OTHER"
+
+  // ── 문서 상태 ──
+  status String @default("DRAFT") // "DRAFT"|"PENDING_APPROVAL"|"APPROVED"|"REJECTED"|"ISSUED"|"ARCHIVED"
+
+  // ── 문서 대상 직원 ──
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // ── 문서 작성자 ──
+  createdBy String
+  creator   User   @relation("DocumentCreator", fields: [createdBy], references: [id])
+
+  // ── 문서 컨텐츠 ──
+  content  String // JSON 저장 (근로계약서 추가 필드, 임금명세서 내용 등)
+  template String? // 템플릿 ID (EMPLOYMENT_CONTRACT_V1 등)
+
+  // ── 버전 관리 (자기참조) ──
+  previousVersionId String?
+  previousVersion   Document?  @relation("DocumentVersions", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersions      Document[] @relation("DocumentVersions")
+  versionNumber     Int        @default(1)
+
+  // ── 관계 ──
+  approvals   Approval[]
+  attachments Attachment[]
+
+  // ── 법정 정보 ──
+  issuedAt    DateTime? // 발급일
+  effectiveAt DateTime? // 발효일
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── 인덱스 ──
+  @@index([employeeId, type]) // 직원별 문서 유형 조회
+  @@index([status]) // 상태별 필터링
+  @@index([type, createdAt]) // 문서 유형별 시간순
+  @@index([createdBy, status]) // 작성자별 상태 필터링
+}
+
+// ─────────────────────────────────────────────
+// 전자결재 라인 (복수 승인자 순차 결재)
+// ─────────────────────────────────────────────
+
+model Approval {
+  id String @id @default(cuid())
+
+  // ── 결재 대상 문서 ──
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // ── 결재자 ──
+  approverId String
+  approver   User   @relation(fields: [approverId], references: [id], onDelete: Cascade)
+
+  // ── 결재 순서 (순차 결재) ──
+  approvalOrder Int // 1, 2, 3, ...
+
+  // ── 결재 상태 ──
+  status String @default("PENDING") // "PENDING"|"APPROVED"|"REJECTED"|"SKIPPED"
+
+  // ── 결재 의견 ──
+  comment String?
+
+  // ── 결재 시각 ──
+  approvedAt DateTime?
+  rejectedAt DateTime?
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── 인덱스 및 제약 ──
+  @@unique([documentId, approverId, approvalOrder]) // 중복 결재 방지
+  @@index([documentId, status]) // 문서별 결재 상태
+  @@index([approverId, status]) // 결재자별 대기 목록
+  @@index([documentId, approvalOrder, status]) // 순차 결재 조회
+}
+
+// ─────────────────────────────────────────────
+// 문서 첨부파일
+// ─────────────────────────────────────────────
+
+model Attachment {
+  id String @id @default(cuid())
+
+  // ── 문서 연결 ──
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // ── 파일 정보 ──
+  fileName String
+  fileSize Int // 바이트
+  mimeType String // "application/pdf", "image/jpeg", etc.
+  fileUrl  String // Vercel Blob URL 또는 로컬 경로
+
+  // ── 메타데이터 ──
+  description String?
+  uploadedBy  String
+  uploader    User   @relation(fields: [uploadedBy], references: [id])
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+
+  // ── 인덱스 ──
+  @@index([documentId]) // 문서별 첨부파일 조회
 }

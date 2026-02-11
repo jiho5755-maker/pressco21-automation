@@ -7,6 +7,7 @@ import {
   Wallet,
   Receipt,
   HandCoins,
+  FileText,
   Settings,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
@@ -66,6 +67,17 @@ export const navGroups: NavGroup[] = [
         href: "/subsidies",
         icon: HandCoins,
         description: "정부 지원금 신청 및 관리",
+      },
+    ],
+  },
+  {
+    label: "행정",
+    items: [
+      {
+        title: "문서 관리",
+        href: "/documents",
+        icon: FileText,
+        description: "근로계약서 및 전자결재",
       },
     ],
   },
