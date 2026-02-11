@@ -237,8 +237,13 @@ export function calculateIncomeTax(
     (row) => row.minSalary <= salaryInThousands && salaryInThousands < row.maxSalary
   );
 
-  // 구간을 찾지 못한 경우 (최고 구간 초과)
+  // 구간을 찾지 못한 경우
   if (!bracket) {
+    // 간이세액표 최소 구간(77만원) 미만이면 소득세 0원
+    if (salaryInThousands < 770) {
+      return { incomeTax: 0, localIncomeTax: 0 };
+    }
+
     // 최고 구간 (1,000만원 초과)의 세액 사용
     const lastBracket = INCOME_TAX_TABLE_2024[INCOME_TAX_TABLE_2024.length - 1];
     const baseTax = lastBracket.taxByDependents[validDependents - 1];

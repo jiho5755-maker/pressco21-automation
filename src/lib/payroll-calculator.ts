@@ -188,6 +188,7 @@ export async function calculateMonthlyPayroll(
       // 변동 수당 추가
       variableOvertimeAmount: variableAllowances.variableOvertimeAmount,
       variableNightWorkAmount: variableAllowances.variableNightWorkAmount,
+      variableHolidayWorkAmount: variableAllowances.variableHolidayWorkAmount,
     },
     {
       nationalPension: employee.nationalPension,
