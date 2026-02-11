@@ -233,34 +233,363 @@ export async function sendBatchSubsidyDeadlineReminders(
 }
 
 // ============================================================================
-// TODO: Phase 3-F 추가 이메일 템플릿
+// Phase 3-F-2: 전자결재 이메일 템플릿
 // ============================================================================
 
 /**
- * 결재 요청 이메일 발송 (미구현)
+ * 결재 요청 이메일 발송
  *
- * @todo Phase 3-F-2: 결재 요청 이메일 템플릿 생성 및 발송
+ * 문서 제출 시 다음 결재자에게 알림 발송
+ *
+ * @param approverId - 결재자 ID (User ID)
+ * @param documentId - 문서 ID
+ * @returns 발송 결과 (성공 여부, 오류 메시지, 이메일 ID)
+ *
+ * @example
+ * ```ts
+ * await sendApprovalRequest(
+ *   "cm6g2a8h100006gbqf5fkgjfx", // 결재자 User ID
+ *   "cm6g2a8h100006gbqf5fkgjfy"  // 문서 ID
+ * );
+ * ```
  */
 export async function sendApprovalRequest(
-  _approverId: string,
-  _documentId: string
+  approverId: string,
+  documentId: string
 ): Promise<NotificationResult> {
-  // TODO: 결재 요청 이메일 템플릿 구현
-  console.warn("[sendApprovalRequest] 미구현");
-  return { success: false, error: "미구현" };
+  try {
+    // 1. 결재자 정보 조회
+    const approver = await prisma.user.findUnique({
+      where: { id: approverId },
+      select: {
+        email: true,
+        employee: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!approver) {
+      return {
+        success: false,
+        error: "결재자를 찾을 수 없습니다.",
+      };
+    }
+
+    if (!approver.email) {
+      return {
+        success: false,
+        error: "결재자의 이메일 주소가 없습니다.",
+      };
+    }
+
+    if (!approver.employee) {
+      return {
+        success: false,
+        error: "결재자의 직원 정보를 찾을 수 없습니다.",
+      };
+    }
+
+    // 2. 문서 정보 조회
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      include: {
+        employee: {
+          select: { name: true },
+        },
+        creator: {
+          select: {
+            employee: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      return {
+        success: false,
+        error: "문서를 찾을 수 없습니다.",
+      };
+    }
+
+    // 3. 문서 유형명 (DOCUMENT_TYPES에서 가져오기)
+    const { DOCUMENT_TYPES } = await import("@/lib/constants");
+    const documentTypeName = DOCUMENT_TYPES[document.type as keyof typeof DOCUMENT_TYPES];
+
+    // 4. 이메일 HTML 생성
+    const DocumentApprovalRequest = (await import("@/emails/document-approval-request"))
+      .default;
+
+    const emailHtml = await render(
+      DocumentApprovalRequest({
+        approverName: approver.employee.name,
+        documentTypeName,
+        documentTitle: document.title,
+        creatorName: document.creator?.employee?.name || "알 수 없음",
+        documentId: document.id,
+      })
+    );
+
+    // 5. 이메일 발송
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: approver.email,
+      subject: `[결재 요청] ${documentTypeName} - ${document.creator?.employee?.name || "알 수 없음"}`,
+      html: emailHtml,
+    });
+
+    // 6. 발송 결과 처리
+    if (result.error) {
+      console.error("[결재 요청 이메일 발송 실패]", {
+        approverId,
+        documentId,
+        error: result.error,
+      });
+
+      return {
+        success: false,
+        error: `이메일 발송 실패: ${result.error.message}`,
+      };
+    }
+
+    console.log("[결재 요청 이메일 발송 성공]", {
+      approverId,
+      approverName: approver.employee.name,
+      documentId,
+      documentTitle: document.title,
+      emailId: result.data?.id,
+    });
+
+    return {
+      success: true,
+      emailId: result.data?.id,
+    };
+  } catch (error) {
+    console.error("[sendApprovalRequest 오류]", {
+      approverId,
+      documentId,
+      error,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
 }
 
 /**
- * 결재 결과 이메일 발송 (미구현)
+ * 결재 결과 이메일 발송 (승인/반려)
  *
- * @todo Phase 3-F-3: 결재 결과 이메일 템플릿 생성 및 발송
+ * 결재 처리 완료 시 작성자에게 알림 발송
+ *
+ * @param creatorId - 작성자 ID (User ID)
+ * @param documentId - 문서 ID
+ * @param isApproved - 승인 여부 (true: 승인, false: 반려)
+ * @param rejectionReason - 반려 사유 (반려 시 필수)
+ * @returns 발송 결과 (성공 여부, 오류 메시지, 이메일 ID)
+ *
+ * @example
+ * ```ts
+ * // 승인
+ * await sendApprovalResult(
+ *   "cm6g2a8h100006gbqf5fkgjfx", // 작성자 User ID
+ *   "cm6g2a8h100006gbqf5fkgjfy", // 문서 ID
+ *   true
+ * );
+ *
+ * // 반려
+ * await sendApprovalResult(
+ *   "cm6g2a8h100006gbqf5fkgjfx",
+ *   "cm6g2a8h100006gbqf5fkgjfy",
+ *   false,
+ *   "계약 기간이 명확하지 않습니다."
+ * );
+ * ```
  */
 export async function sendApprovalResult(
-  _creatorId: string,
-  _documentId: string,
-  _isApproved: boolean
+  creatorId: string,
+  documentId: string,
+  isApproved: boolean,
+  rejectionReason?: string
 ): Promise<NotificationResult> {
-  // TODO: 결재 결과 이메일 템플릿 구현
-  console.warn("[sendApprovalResult] 미구현");
-  return { success: false, error: "미구현" };
+  try {
+    // 1. 작성자 정보 조회
+    const creator = await prisma.user.findUnique({
+      where: { id: creatorId },
+      select: {
+        email: true,
+        employee: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!creator) {
+      return {
+        success: false,
+        error: "작성자를 찾을 수 없습니다.",
+      };
+    }
+
+    if (!creator.email) {
+      return {
+        success: false,
+        error: "작성자의 이메일 주소가 없습니다.",
+      };
+    }
+
+    if (!creator.employee) {
+      return {
+        success: false,
+        error: "작성자의 직원 정보를 찾을 수 없습니다.",
+      };
+    }
+
+    // 2. 문서 정보 조회
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      include: {
+        approvals: {
+          where: {
+            status: isApproved ? "APPROVED" : "REJECTED",
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          take: 1,
+          include: {
+            approver: {
+              select: {
+                employee: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      return {
+        success: false,
+        error: "문서를 찾을 수 없습니다.",
+      };
+    }
+
+    // 3. 최신 결재자 정보
+    const latestApproval = document.approvals[0];
+    if (!latestApproval) {
+      return {
+        success: false,
+        error: "결재 정보를 찾을 수 없습니다.",
+      };
+    }
+
+    const approverName = latestApproval.approver?.employee?.name || "알 수 없음";
+
+    // 4. 문서 유형명
+    const { DOCUMENT_TYPES } = await import("@/lib/constants");
+    const documentTypeName = DOCUMENT_TYPES[document.type as keyof typeof DOCUMENT_TYPES];
+
+    // 5. 이메일 HTML 생성 (승인/반려 분기)
+    let emailHtml: string;
+    let subject: string;
+
+    if (isApproved) {
+      const DocumentApproved = (await import("@/emails/document-approved")).default;
+
+      emailHtml = await render(
+        DocumentApproved({
+          creatorName: creator.employee.name,
+          documentTypeName,
+          documentTitle: document.title,
+          approverName,
+          documentId: document.id,
+        })
+      );
+
+      subject = `[결재 승인] ${documentTypeName} 승인 완료`;
+    } else {
+      if (!rejectionReason) {
+        return {
+          success: false,
+          error: "반려 사유가 필요합니다.",
+        };
+      }
+
+      const DocumentRejected = (await import("@/emails/document-rejected")).default;
+
+      emailHtml = await render(
+        DocumentRejected({
+          creatorName: creator.employee.name,
+          documentTypeName,
+          documentTitle: document.title,
+          approverName,
+          rejectionReason,
+          documentId: document.id,
+        })
+      );
+
+      subject = `[결재 반려] ${documentTypeName} 반려됨`;
+    }
+
+    // 6. 이메일 발송
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: creator.email,
+      subject,
+      html: emailHtml,
+    });
+
+    // 7. 발송 결과 처리
+    if (result.error) {
+      console.error("[결재 결과 이메일 발송 실패]", {
+        creatorId,
+        documentId,
+        isApproved,
+        error: result.error,
+      });
+
+      return {
+        success: false,
+        error: `이메일 발송 실패: ${result.error.message}`,
+      };
+    }
+
+    console.log("[결재 결과 이메일 발송 성공]", {
+      creatorId,
+      creatorName: creator.employee.name,
+      documentId,
+      documentTitle: document.title,
+      isApproved,
+      emailId: result.data?.id,
+    });
+
+    return {
+      success: true,
+      emailId: result.data?.id,
+    };
+  } catch (error) {
+    console.error("[sendApprovalResult 오류]", {
+      creatorId,
+      documentId,
+      isApproved,
+      error,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
 }

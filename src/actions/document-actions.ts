@@ -75,6 +75,22 @@ export const createDocument = authActionClient
       return document;
     });
 
+    // 3. 첫 번째 결재자에게 이메일 발송 (비동기, 오류 무시)
+    const firstApprover = parsedInput.approvers.find(
+      (a) => a.approvalOrder === 1
+    );
+
+    if (firstApprover) {
+      const { sendApprovalRequest } = await import("./notification-actions");
+      sendApprovalRequest(firstApprover.approverId, result.id).catch((error) => {
+        console.error("[createDocument] 결재 요청 이메일 발송 실패", {
+          documentId: result.id,
+          approverId: firstApprover.approverId,
+          error,
+        });
+      });
+    }
+
     revalidatePath("/documents");
     revalidatePath("/dashboard");
     return { success: true, document: result };
@@ -296,6 +312,44 @@ export const approveDocument = managerActionClient
       return { approval: updated, documentComplete: allApproved };
     });
 
+    // 6. 이메일 발송 (비동기, 오류 무시)
+    const { sendApprovalRequest, sendApprovalResult } = await import(
+      "./notification-actions"
+    );
+
+    if (result.documentComplete) {
+      // 모든 결재 완료 → 작성자에게 승인 알림
+      sendApprovalResult(approval.document.createdBy, approval.documentId, true).catch(
+        (error) => {
+          console.error("[approveDocument] 승인 알림 이메일 발송 실패", {
+            documentId: approval.documentId,
+            creatorId: approval.document.createdBy,
+            error,
+          });
+        }
+      );
+    } else {
+      // 다음 결재자에게 결재 요청
+      const nextApproval = await prisma.approval.findFirst({
+        where: {
+          documentId: approval.documentId,
+          approvalOrder: approval.approvalOrder + 1,
+        },
+      });
+
+      if (nextApproval) {
+        sendApprovalRequest(nextApproval.approverId, approval.documentId).catch(
+          (error) => {
+            console.error("[approveDocument] 다음 결재자 알림 발송 실패", {
+              documentId: approval.documentId,
+              nextApproverId: nextApproval.approverId,
+              error,
+            });
+          }
+        );
+      }
+    }
+
     revalidatePath("/documents");
     return { success: true, ...result };
   });
@@ -385,6 +439,21 @@ export const rejectDocument = managerActionClient
       });
 
       return rejected;
+    });
+
+    // 5. 작성자에게 반려 알림 이메일 발송 (비동기, 오류 무시)
+    const { sendApprovalResult } = await import("./notification-actions");
+    sendApprovalResult(
+      approval.document.createdBy,
+      approval.documentId,
+      false,
+      parsedInput.rejectReason
+    ).catch((error) => {
+      console.error("[rejectDocument] 반려 알림 이메일 발송 실패", {
+        documentId: approval.documentId,
+        creatorId: approval.document.createdBy,
+        error,
+      });
     });
 
     revalidatePath("/documents");
