@@ -40,6 +40,10 @@ model User {
   // Phase 3-D: 알림 로그
   receivedNotifications NotificationLog[] @relation("NotificationRecipient")
 
+  // Phase 5: 알림 시스템
+  notificationPreference NotificationPreference? @relation("UserNotificationPreference")
+  webNotifications       Notification[]          @relation("UserNotifications")
+
   employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
 
   createdAt DateTime @default(now())
@@ -653,4 +657,88 @@ model NotificationLog {
   @@index([type, sentAt]) // 유형별 통계
   @@index([success, sentAt]) // 실패 건 조회
   @@index([emailId]) // Resend 이메일 ID 조회
+}
+
+// ─────────────────────────────────────────────
+// 웹 알림 (Phase 5: 알림 시스템 고도화)
+// ─────────────────────────────────────────────
+
+model Notification {
+  id String @id @default(cuid())
+
+  // ── 수신자 (User 삭제 시 SetNull, 스냅샷 보존) ──
+  recipientId    String?
+  recipient      User?   @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: SetNull)
+  recipientName  String // User.name 스냅샷 (감사 로그용)
+  recipientEmail String // User.email 스냅샷 (감사 로그용)
+
+  // ── 알림 내용 ──
+  type    String // "APPROVAL_REQUEST"|"DOCUMENT_APPROVED"|"DOCUMENT_REJECTED"|"PAYSLIP_READY"|"SUBSIDY_APPROVED"|"LEAVE_APPROVED"|"EXPENSE_APPROVED"|"ATTENDANCE_CONFIRMED"|"ANNUAL_LEAVE_LOW"|"CONTRACT_EXPIRING"|"PROBATION_ENDING"|"SYSTEM"
+  title   String
+  message String
+
+  // ── Polymorphic 관계 (관련 엔티티) ──
+  relatedEntityType String? // "Document"|"PayrollRecord"|"SubsidyApplication"|"LeaveRecord"|"Expense"|"AttendanceRecord"
+  relatedEntityId   String? // 엔티티의 실제 ID (FK 제약 없음)
+
+  // ── 액션 URL ──
+  actionUrl String? // 클릭 시 이동 경로 (예: /documents/abc123)
+
+  // ── 읽음 상태 ──
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  // updatedAt은 불필요 (알림 생성 후 수정 없음, isRead/readAt만 변경)
+
+  // ── 인덱스 ──
+  @@index([recipientId, isRead, createdAt]) // 미읽음 알림 조회 (정렬 포함)
+  @@index([recipientId, createdAt]) // 최신 알림 조회 (읽음 여부 무관)
+  @@index([type, createdAt]) // 유형별 통계 (관리자용)
+  @@index([relatedEntityType, relatedEntityId]) // 역방향 조회 (엔티티 삭제 시 알림 정리)
+}
+
+// ─────────────────────────────────────────────
+// 알림 설정 (사용자별 채널/유형 설정)
+// ─────────────────────────────────────────────
+
+model NotificationPreference {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation("UserNotificationPreference", fields: [userId], references: [id], onDelete: Cascade)
+
+  // ── 채널별 전역 설정 ──
+  emailEnabled Boolean @default(true) // 이메일 알림 전체 활성화
+  webEnabled   Boolean @default(true) // 웹 알림 전체 활성화
+
+  // ── 유형별 세부 설정 (1:N 관계) ──
+  typePreferences NotificationTypePreference[]
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationTypePreference {
+  id String @id @default(cuid())
+
+  preferenceId String
+  preference   NotificationPreference @relation(fields: [preferenceId], references: [id], onDelete: Cascade)
+
+  // ── 알림 유형 ──
+  type String // "APPROVAL_REQUEST"|"DOCUMENT_APPROVED"|... (Notification.type과 동일)
+
+  // ── 채널별 활성화 ──
+  emailEnabled Boolean @default(true)
+  webEnabled   Boolean @default(true)
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── 제약 및 인덱스 ──
+  @@unique([preferenceId, type]) // 중복 설정 방지
+  @@index([preferenceId]) // 설정 조회 최적화
 }

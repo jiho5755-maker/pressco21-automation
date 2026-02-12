@@ -121,6 +121,24 @@ export const APPROVAL_STATUS = {
   SKIPPED: "후속생략",
 } as const;
 
+// ── 알림 유형 (Phase 5) ──
+export const NOTIFICATION_TYPES = {
+  APPROVAL_REQUEST: "결재 요청",
+  DOCUMENT_APPROVED: "문서 승인",
+  DOCUMENT_REJECTED: "문서 반려",
+  PAYSLIP_READY: "급여명세서 발급",
+  SUBSIDY_APPROVED: "지원금 승인",
+  LEAVE_APPROVED: "휴가 승인",
+  LEAVE_REJECTED: "휴가 반려",
+  EXPENSE_APPROVED: "경비 승인",
+  EXPENSE_REJECTED: "경비 반려",
+  ATTENDANCE_CONFIRMED: "근태 확정",
+  ANNUAL_LEAVE_LOW: "연차 부족",
+  CONTRACT_EXPIRING: "계약 만료 임박",
+  PROBATION_ENDING: "수습 종료 임박",
+  SYSTEM: "시스템 알림",
+} as const;
+
 // ── 사용자 역할 ──
 export const USER_ROLES = {
   ADMIN: "admin",

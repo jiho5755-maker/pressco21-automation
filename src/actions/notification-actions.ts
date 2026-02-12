@@ -9,10 +9,13 @@
 
 "use server";
 
+import { z } from "zod/v4";
+import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { differenceInDays, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { authActionClient, ActionError } from "@/lib/safe-action";
 import type { NotificationResult } from "@/types/notification";
 import SubsidyDeadlineReminder from "@/emails/subsidy-deadline-reminder";
 import { SUBSIDY_TYPES } from "@/lib/constants";
@@ -1016,4 +1019,258 @@ export async function sendBatchPayrollStatements(
       errors: [error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다."],
     };
   }
+}
+
+// ============================================================================
+// Phase 5: 웹 알림 시스템
+// ============================================================================
+
+/**
+ * 미읽음 알림 개수 조회
+ *
+ * 헤더 Bell 아이콘의 Badge 표시용
+ *
+ * @returns 미읽음 알림 개수
+ */
+export const getUnreadNotificationCount = authActionClient.action(async ({ ctx }) => {
+  const count = await prisma.notification.count({
+    where: {
+      recipientId: ctx.userId,
+      isRead: false,
+    },
+  });
+
+  return { count };
+});
+
+/**
+ * 알림 목록 조회 (페이징)
+ *
+ * /notifications 페이지용
+ *
+ * @param limit - 한 번에 조회할 알림 개수 (기본 20, 최대 100)
+ * @param offset - 건너뛸 알림 개수 (페이징용, 기본 0)
+ * @param unreadOnly - 미읽음 알림만 조회 (기본 false)
+ * @param type - 유형 필터 (선택)
+ * @returns 알림 목록, 총 개수, 다음 페이지 존재 여부
+ */
+const getNotificationsSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional().default(20),
+  offset: z.number().int().min(0).optional().default(0),
+  unreadOnly: z.boolean().optional().default(false),
+  type: z.string().optional(), // 유형 필터 (선택)
+});
+
+export const getNotifications = authActionClient
+  .inputSchema(getNotificationsSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { limit, offset, unreadOnly, type } = parsedInput;
+
+    const where = {
+      recipientId: ctx.userId,
+      ...(unreadOnly && { isRead: false }),
+      ...(type && { type }),
+    };
+
+    const [notifications, totalCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: [{ isRead: "asc" }, { createdAt: "desc" }], // 미읽음 우선, 최신순
+        take: limit,
+        skip: offset,
+      }),
+      prisma.notification.count({ where }),
+    ]);
+
+    return {
+      notifications,
+      totalCount,
+      hasMore: offset + notifications.length < totalCount,
+    };
+  });
+
+/**
+ * 최근 알림 조회 (드롭다운용, 최대 10개)
+ *
+ * NotificationBell 컴포넌트의 드롭다운에서 사용
+ *
+ * @returns 최근 알림 10개 (미읽음 우선, 최신순)
+ */
+export const getRecentNotifications = authActionClient.action(async ({ ctx }) => {
+  const notifications = await prisma.notification.findMany({
+    where: {
+      recipientId: ctx.userId,
+    },
+    orderBy: [{ isRead: "asc" }, { createdAt: "desc" }], // 미읽음 우선, 최신순
+    take: 10,
+  });
+
+  return { notifications };
+});
+
+/**
+ * 읽음 처리
+ *
+ * 알림 클릭 시 isRead=true, readAt=현재시각 설정
+ *
+ * @param notificationId - 알림 ID
+ * @returns 성공 여부
+ */
+const markNotificationAsReadSchema = z.object({
+  notificationId: z.string(),
+});
+
+export const markNotificationAsRead = authActionClient
+  .inputSchema(markNotificationAsReadSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { notificationId } = parsedInput;
+
+    // 본인 알림만 읽음 처리 가능
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+      select: { recipientId: true, isRead: true },
+    });
+
+    if (!notification) {
+      throw new ActionError("알림을 찾을 수 없습니다.");
+    }
+
+    if (notification.recipientId !== ctx.userId) {
+      throw new ActionError("본인의 알림만 읽음 처리할 수 있습니다.");
+    }
+
+    if (notification.isRead) {
+      return { success: true }; // 이미 읽음 처리됨
+    }
+
+    await prisma.notification.update({
+      where: { id: notificationId },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+
+    revalidatePath("/notifications");
+    return { success: true };
+  });
+
+/**
+ * 전체 읽음 처리
+ *
+ * "모두 읽음" 버튼 클릭 시 모든 미읽음 알림 읽음 처리
+ *
+ * @returns 성공 여부
+ */
+export const markAllNotificationsAsRead = authActionClient.action(async ({ ctx }) => {
+  await prisma.notification.updateMany({
+    where: {
+      recipientId: ctx.userId,
+      isRead: false,
+    },
+    data: {
+      isRead: true,
+      readAt: new Date(),
+    },
+  });
+
+  revalidatePath("/notifications");
+  return { success: true };
+});
+
+/**
+ * 알림 삭제 (hard delete)
+ *
+ * 본인 알림만 삭제 가능
+ *
+ * @param notificationId - 알림 ID
+ * @returns 성공 여부
+ */
+const deleteNotificationSchema = z.object({
+  notificationId: z.string(),
+});
+
+export const deleteNotification = authActionClient
+  .inputSchema(deleteNotificationSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { notificationId } = parsedInput;
+
+    // 본인 알림만 삭제 가능
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+      select: { recipientId: true },
+    });
+
+    if (!notification) {
+      throw new ActionError("알림을 찾을 수 없습니다.");
+    }
+
+    if (notification.recipientId !== ctx.userId) {
+      throw new ActionError("본인의 알림만 삭제할 수 있습니다.");
+    }
+
+    await prisma.notification.delete({
+      where: { id: notificationId },
+    });
+
+    revalidatePath("/notifications");
+    return { success: true };
+  });
+
+/**
+ * 알림 생성 (내부용, 이메일 발송과 분리)
+ *
+ * 이 함수는 Server Actions에서만 호출되며, 프론트엔드에서 직접 호출하지 않음
+ * 이메일 발송 함수(sendApprovalRequest 등)와 함께 호출하여 웹 알림 생성
+ *
+ * @param params - 알림 생성 파라미터
+ * @returns 성공 여부 및 생성된 알림 ID
+ *
+ * @example
+ * ```ts
+ * // 결재 요청 시 웹 알림 생성
+ * await createNotification({
+ *   recipientId: approverId,
+ *   recipientName: "홍길동",
+ *   recipientEmail: "hong@example.com",
+ *   type: "APPROVAL_REQUEST",
+ *   title: "결재 요청",
+ *   message: "근로계약서 결재가 요청되었습니다.",
+ *   relatedEntityType: "Document",
+ *   relatedEntityId: documentId,
+ *   actionUrl: `/documents/${documentId}`,
+ * });
+ * ```
+ */
+interface CreateNotificationParams {
+  recipientId: string;
+  recipientName: string;
+  recipientEmail: string;
+  type: string;
+  title: string;
+  message: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  actionUrl?: string;
+}
+
+export async function createNotification(
+  params: CreateNotificationParams
+): Promise<{ success: boolean; notificationId: string }> {
+  const notification = await prisma.notification.create({
+    data: {
+      recipientId: params.recipientId,
+      recipientName: params.recipientName,
+      recipientEmail: params.recipientEmail,
+      type: params.type,
+      title: params.title,
+      message: params.message,
+      relatedEntityType: params.relatedEntityType,
+      relatedEntityId: params.relatedEntityId,
+      actionUrl: params.actionUrl,
+    },
+  });
+
+  revalidatePath("/notifications");
+  return { success: true, notificationId: notification.id };
 }

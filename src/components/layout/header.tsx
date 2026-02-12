@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function Header() {
   const { data: session } = useSession();
@@ -26,6 +27,10 @@ export function Header() {
       <SidebarTrigger />
       <Separator orientation="vertical" className="mx-2 h-4" />
       <div className="flex-1" />
+
+      {/* Phase 5: 알림 시스템 */}
+      <NotificationBell />
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">

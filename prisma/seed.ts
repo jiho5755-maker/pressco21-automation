@@ -750,6 +750,73 @@ async function main() {
   }
   console.log("  정부지원사업 신청 5건 생성");
 
+  // ─── 11. 웹 알림 (Phase 5: 테스트 데이터) ───
+  const testNotifications = [
+    {
+      recipientId: admin.id,
+      recipientName: admin.name || "관리자",
+      recipientEmail: admin.email,
+      type: "APPROVAL_REQUEST",
+      title: "결재 요청",
+      message: "홍길동 직원의 근로계약서 결재가 요청되었습니다.",
+      relatedEntityType: "Document",
+      relatedEntityId: "test-doc-1",
+      actionUrl: "/documents",
+      isRead: false,
+    },
+    {
+      recipientId: admin.id,
+      recipientName: admin.name || "관리자",
+      recipientEmail: admin.email,
+      type: "PAYSLIP_READY",
+      title: "급여명세서 발급",
+      message: "2026년 2월 급여명세서가 발급되었습니다.",
+      relatedEntityType: "PayrollRecord",
+      relatedEntityId: "test-payroll-1",
+      actionUrl: "/payroll",
+      isRead: true,
+      readAt: new Date("2026-02-10"),
+    },
+    {
+      recipientId: manager.id,
+      recipientName: manager.name || "부서장",
+      recipientEmail: manager.email,
+      type: "LEAVE_APPROVED",
+      title: "휴가 승인",
+      message: "2026년 2월 20일 연차가 승인되었습니다.",
+      relatedEntityType: "LeaveRecord",
+      relatedEntityId: "test-leave-1",
+      actionUrl: "/leaves",
+      isRead: false,
+    },
+    {
+      recipientId: viewer.id,
+      recipientName: viewer.name || "일반직원",
+      recipientEmail: viewer.email,
+      type: "EXPENSE_APPROVED",
+      title: "경비 승인",
+      message: "2026년 2월 교통비 경비가 승인되었습니다.",
+      relatedEntityType: "Expense",
+      relatedEntityId: "test-expense-1",
+      actionUrl: "/expenses",
+      isRead: false,
+    },
+    {
+      recipientId: admin.id,
+      recipientName: admin.name || "관리자",
+      recipientEmail: admin.email,
+      type: "SYSTEM",
+      title: "시스템 알림",
+      message: "Phase 5 알림 시스템이 정상적으로 작동 중입니다.",
+      isRead: false,
+    },
+  ];
+
+  for (const notification of testNotifications) {
+    await prisma.notification.create({ data: notification });
+  }
+  console.log("  웹 알림 5건 생성");
+
   console.log("시드 데이터 생성 완료!");
 }
 

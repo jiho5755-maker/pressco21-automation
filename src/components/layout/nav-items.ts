@@ -12,6 +12,7 @@ import {
   Calculator,
   TrendingUp,
   PiggyBank,
+  Bell,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
 
@@ -24,6 +25,12 @@ export const navGroups: NavGroup[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
         description: "전체 현황을 한눈에 확인",
+      },
+      {
+        title: "알림",
+        href: "/notifications",
+        icon: Bell,
+        description: "시스템 알림 확인",
       },
     ],
   },
