@@ -123,6 +123,17 @@ export const APPROVAL_STATUS = {
   SKIPPED: "후속생략",
 } as const;
 
+// ── 회사 공용 문서 카테고리 (Phase X) ──
+export const COMPANY_DOCUMENT_CATEGORIES = {
+  BANK: "통장사본",
+  BUSINESS_LICENSE: "사업자등록증",
+  SEAL: "직인/인감",
+  TAX: "세무서류",
+  OTHER: "기타",
+} as const;
+
+export type CompanyDocumentCategory = keyof typeof COMPANY_DOCUMENT_CATEGORIES;
+
 // ── 알림 유형 (Phase 5) ──
 export const NOTIFICATION_TYPES = {
   APPROVAL_REQUEST: "결재 요청",

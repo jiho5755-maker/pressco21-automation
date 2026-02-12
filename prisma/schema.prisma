@@ -44,6 +44,9 @@ model User {
   notificationPreference NotificationPreference? @relation("UserNotificationPreference")
   webNotifications       Notification[]          @relation("UserNotifications")
 
+  // Phase X: 회사 공용 문서 (통장사본, 사업자등록증 등)
+  companyDocuments CompanyDocument[] @relation("CompanyDocumentUploader")
+
   employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
 
   createdAt DateTime @default(now())
@@ -741,4 +744,35 @@ model NotificationTypePreference {
   // ── 제약 및 인덱스 ──
   @@unique([preferenceId, type]) // 중복 설정 방지
   @@index([preferenceId]) // 설정 조회 최적화
+}
+
+// ─────────────────────────────────────────────
+// 회사 공용 문서 (Phase X: 통장사본, 사업자등록증 등)
+// ─────────────────────────────────────────────
+
+model CompanyDocument {
+  id String @id @default(cuid())
+
+  // ── 문서 메타데이터 ──
+  title       String // "신한은행 통장사본", "사업자등록증"
+  category    String // "BANK"|"BUSINESS_LICENSE"|"SEAL"|"TAX"|"OTHER"
+  description String? // 추가 설명 (선택)
+
+  // ── 파일 정보 (Vercel Blob) ──
+  fileName String // "company_bank_account.pdf"
+  fileUrl  String // Vercel Blob URL
+  fileSize Int // bytes
+  mimeType String // "application/pdf", "image/jpeg"
+
+  // ── 업로드 정보 ──
+  uploadedBy String
+  uploader   User   @relation("CompanyDocumentUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── 인덱스 ──
+  @@index([category, createdAt]) // 카테고리별 시간순 조회
+  @@index([uploadedBy]) // 업로드자별 조회
 }

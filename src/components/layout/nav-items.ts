@@ -13,6 +13,7 @@ import {
   TrendingUp,
   PiggyBank,
   Bell,
+  Building2,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
 
@@ -124,6 +125,12 @@ export const navGroups: NavGroup[] = [
   {
     label: "시스템",
     items: [
+      {
+        title: "회사 공용 문서",
+        href: "/company-documents",
+        icon: Building2,
+        description: "통장사본, 사업자등록증 등",
+      },
       {
         title: "설정",
         href: "/settings",

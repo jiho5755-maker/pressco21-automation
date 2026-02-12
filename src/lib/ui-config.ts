@@ -327,3 +327,32 @@ export const approvalStatusConfig: Record<string, BadgeConfig> = {
       "border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500",
   },
 };
+
+// ── 회사 공용 문서 카테고리 Badge (Phase X) ──
+export const companyDocumentCategoryConfig: Record<string, BadgeConfig> = {
+  BANK: {
+    label: "통장사본",
+    className:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  },
+  BUSINESS_LICENSE: {
+    label: "사업자등록증",
+    className:
+      "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+  },
+  SEAL: {
+    label: "직인/인감",
+    className:
+      "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+  },
+  TAX: {
+    label: "세무서류",
+    className:
+      "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300",
+  },
+  OTHER: {
+    label: "기타",
+    className:
+      "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
+  },
+};
