@@ -109,6 +109,29 @@ export const approveExpense = managerActionClient
       },
     });
 
+    // 알림 생성 (비동기, 오류 무시)
+    if (parsedInput.action === "APPROVED") {
+      import("@/lib/notification-helper")
+        .then(({ notifyExpenseApproved }) => notifyExpenseApproved(expense.id))
+        .catch((error) => {
+          console.error("[approveExpense] 승인 알림 생성 실패", {
+            expenseId: expense.id,
+            error,
+          });
+        });
+    } else if (parsedInput.action === "REJECTED") {
+      import("@/lib/notification-helper")
+        .then(({ notifyExpenseRejected }) =>
+          notifyExpenseRejected(expense.id, parsedInput.rejectReason || "")
+        )
+        .catch((error) => {
+          console.error("[approveExpense] 반려 알림 생성 실패", {
+            expenseId: expense.id,
+            error,
+          });
+        });
+    }
+
     revalidatePath("/expenses");
     revalidatePath("/dashboard");
     return { expense };

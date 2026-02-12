@@ -350,6 +350,42 @@ export const approveDocument = managerActionClient
       }
     }
 
+    // 웹 알림 생성 (비동기, 오류 무시)
+    import("@/lib/notification-helper").then(
+      ({ notifyDocumentApprovalPending, notifyDocumentApproved }) => {
+        if (result.documentComplete) {
+          // 모든 결재 완료 → 작성자에게 승인 완료 알림
+          notifyDocumentApproved(approval.documentId).catch((error) => {
+            console.error("[approveDocument] 승인 완료 알림 생성 실패", {
+              documentId: approval.documentId,
+              error,
+            });
+          });
+        } else {
+          // 다음 결재자에게 대기 알림
+          prisma.approval.findFirst({
+            where: {
+              documentId: approval.documentId,
+              approvalOrder: approval.approvalOrder + 1,
+            },
+          }).then((nextApproval) => {
+            if (nextApproval) {
+              notifyDocumentApprovalPending(
+                approval.documentId,
+                nextApproval.approverId
+              ).catch((error) => {
+                console.error("[approveDocument] 다음 결재자 알림 생성 실패", {
+                  documentId: approval.documentId,
+                  nextApproverId: nextApproval.approverId,
+                  error,
+                });
+              });
+            }
+          });
+        }
+      }
+    );
+
     revalidatePath("/documents");
     return { success: true, ...result };
   });
@@ -455,6 +491,18 @@ export const rejectDocument = managerActionClient
         error,
       });
     });
+
+    // 웹 알림 생성 (비동기, 오류 무시)
+    import("@/lib/notification-helper")
+      .then(({ notifyDocumentRejected }) =>
+        notifyDocumentRejected(approval.documentId, parsedInput.rejectReason)
+      )
+      .catch((error) => {
+        console.error("[rejectDocument] 반려 알림 생성 실패", {
+          documentId: approval.documentId,
+          error,
+        });
+      });
 
     revalidatePath("/documents");
     return { success: true, approval: result };

@@ -309,6 +309,16 @@ export const approveLeaveRequest = managerActionClient
       return updated;
     });
 
+    // 알림 생성 (비동기, 오류 무시)
+    import("@/lib/notification-helper")
+      .then(({ notifyLeaveApproved }) => notifyLeaveApproved(id))
+      .catch((error) => {
+        console.error("[approveLeaveRequest] 승인 알림 생성 실패", {
+          leaveId: id,
+          error,
+        });
+      });
+
     // 4. 경로 재검증
     revalidatePath("/leaves");
     revalidatePath("/employees");
@@ -363,6 +373,18 @@ export const rejectLeaveRequest = managerActionClient
         rejectedReason,
       },
     });
+
+    // 알림 생성 (비동기, 오류 무시)
+    import("@/lib/notification-helper")
+      .then(({ notifyLeaveRejected }) =>
+        notifyLeaveRejected(id, rejectedReason)
+      )
+      .catch((error) => {
+        console.error("[rejectLeaveRequest] 반려 알림 생성 실패", {
+          leaveId: id,
+          error,
+        });
+      });
 
     // 4. 경로 재검증
     revalidatePath("/leaves");
