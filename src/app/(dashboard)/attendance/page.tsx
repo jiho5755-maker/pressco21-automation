@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import {
   getDataScope,
   buildEmployeeFilter,

@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import { format, addDays, differenceInCalendarDays } from "date-fns";
+import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import {
   Calendar as CalendarIcon,
   Info,
-  AlertCircle,
   Baby,
 } from "lucide-react";
 import type { Employee, Department } from "@prisma/client";
@@ -37,7 +36,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -45,7 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// RadioGroup은 사용하지 않음 (Select로 대체)
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -54,10 +51,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { leaveTypeConfig } from "@/lib/ui-config";
 
 type EmployeeWithDepartment = Employee & {
   department: Department;

@@ -16,7 +16,6 @@ const csvContent = fs.readFileSync(csvPath, "utf-8");
 
 // CSV 파싱
 const lines = csvContent.split("\n").filter((line) => line.trim() !== "");
-const header = lines[0]; // 헤더: min_salary,max_salary,dep_1,dep_2,...,dep_11
 
 const rows: TaxTableRow[] = [];
 

@@ -39,11 +39,9 @@ interface SubsidiesPageClientProps {
 
 export function SubsidiesPageClient({
   applications,
-  stats,
   employees,
 }: SubsidiesPageClientProps) {
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
 
   const [selectedType, setSelectedType] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");

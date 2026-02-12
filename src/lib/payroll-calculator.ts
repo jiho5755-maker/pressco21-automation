@@ -4,7 +4,6 @@
 import { prisma } from "@/lib/prisma";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { calculateHourlyRate, calculateSalary } from "@/lib/salary-calculator";
-import { LABOR_STANDARDS_2026 } from "@/lib/constants";
 
 /**
  * 월별 근태 기록 기반 변동 수당 계산
@@ -67,7 +66,6 @@ export async function calculateVariableAllowances(
   // 5. 가산수당 계산 (통상시급 × 1.5 × 시간)
   const overtimeHours = totalOvertimeMinutes / 60;
   const nightWorkHours = totalNightWorkMinutes / 60;
-  const holidayWorkHours = totalHolidayWorkMinutes / 60;
 
   // 고정OT 사용 중이면 변동 수당 0원
   const variableOvertimeAmount = employee.useFixedOT

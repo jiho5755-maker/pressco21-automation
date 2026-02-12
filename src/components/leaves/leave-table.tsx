@@ -19,10 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { leaveTypeConfig, leaveStatusConfig } from "@/lib/ui-config";
-import {
-  approveLeaveRequest,
-  rejectLeaveRequest,
-} from "@/actions/leave-actions";
+import { approveLeaveRequest } from "@/actions/leave-actions";
 import { LeaveRejectDialog } from "./leave-reject-dialog";
 import { useRole } from "@/hooks/use-role";
 

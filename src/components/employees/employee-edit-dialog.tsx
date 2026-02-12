@@ -409,6 +409,7 @@ export function EmployeeEditDialog({
       const calculatedAmount = Math.floor((hourlyRate * 1.5 * fixedOTHoursWatch) / 100) * 100;
       salaryForm.setValue("fixedOTAmount", calculatedAmount);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedOTHoursWatch, baseSalaryWatch, mealAllowanceWatch, transportAllowanceWatch, positionAllowanceWatch]);
 
   // fixedOTAmount 변경 시 → fixedOTHours 역산
@@ -427,6 +428,7 @@ export function EmployeeEditDialog({
         salaryForm.setValue("fixedOTHours", calculatedHours);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixedOTAmountWatch]);
 
   const baseGross =

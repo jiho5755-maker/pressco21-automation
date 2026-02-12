@@ -14,7 +14,6 @@ import {
   fetchPendingApprovalsList,
 } from "@/lib/dashboard-queries";
 import { getCurrentUserEmployee } from "@/lib/rbac-helpers";
-import { prisma } from "@/lib/prisma";
 
 interface DashboardManagerProps {
   userId: string;

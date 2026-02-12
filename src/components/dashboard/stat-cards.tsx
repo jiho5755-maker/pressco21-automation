@@ -1,8 +1,6 @@
 // 대시보드 통계 카드 모음
 import { StatCard } from "@/components/shared/stat-card";
 import {
-  Briefcase,
-  Clock,
   Receipt,
   Users,
   CalendarCheck,

@@ -37,7 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Mail, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
 
 // ============================================================================
 // 타입 정의

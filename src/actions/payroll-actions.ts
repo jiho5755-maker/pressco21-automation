@@ -35,7 +35,7 @@ const exportPayrollSchema = z.object({
  */
 export const generatePayrollRecord = authActionClient
   .inputSchema(generatePayrollSchema)
-  .action(async ({ parsedInput, ctx }) => {
+  .action(async ({ parsedInput }) => {
     const { employeeId, year, month } = parsedInput;
 
     // 1. 중복 체크
@@ -128,7 +128,7 @@ export const confirmPayrollRecords = authActionClient
  */
 export const deletePayrollRecord = authActionClient
   .inputSchema(deletePayrollSchema)
-  .action(async ({ parsedInput, ctx }) => {
+  .action(async ({ parsedInput }) => {
     const { id } = parsedInput;
 
     // 기록 조회

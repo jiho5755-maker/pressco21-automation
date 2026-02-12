@@ -20,7 +20,7 @@ export function ApprovalTimeline({ approvals }: ApprovalTimelineProps) {
 
   return (
     <div className="space-y-4">
-      {sortedApprovals.map((approval, idx) => {
+      {sortedApprovals.map((approval) => {
         const statusConfig = approvalStatusConfig[approval.status];
         const isActive = approval.status === "PENDING";
         const isCompleted = approval.status === "APPROVED";

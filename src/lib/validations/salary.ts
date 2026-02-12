@@ -1,6 +1,6 @@
 // 최저임금 검증 유틸리티 — Phase 1-B: 수당 포함 검증
 
-import { LABOR_STANDARDS_2026, TAX_FREE_LIMITS_2026 } from "@/lib/constants";
+import { LABOR_STANDARDS_2026 } from "@/lib/constants";
 
 export interface MinimumWageValidation {
   isValid: boolean;
@@ -23,21 +23,18 @@ export function validateMinimumWage(
   mealAllowance: number = 0,
   transportAllowance: number = 0,
   positionAllowance: number = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   taxFreeMeal: boolean = true,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   taxFreeTransport: boolean = true,
   salaryType: "MONTHLY" | "HOURLY" = "MONTHLY"
 ): MinimumWageValidation {
   const { hourly, monthly, standardMonthlyHours } = LABOR_STANDARDS_2026.minimumWage;
 
-  // 비과세 여부와 무관하게 정기 지급 수당은 전액 최저임금에 산입
-  // (소득세법상 비과세 ≠ 최저임금법상 제외)
-  const mealIncludable = mealAllowance;
-  const transportIncludable = transportAllowance;
-
   if (salaryType === "HOURLY") {
     const totalHourly =
       baseSalary +
-      Math.round((mealIncludable + transportIncludable + positionAllowance) / standardMonthlyHours);
+      Math.round((mealAllowance + transportAllowance + positionAllowance) / standardMonthlyHours);
 
     if (totalHourly < hourly) {
       return {
@@ -50,8 +47,8 @@ export function validateMinimumWage(
     return { isValid: true, calculatedHourly: totalHourly };
   }
 
-  // 월급제: 기본급 + 비과세 초과분 + 직책수당으로 환산 시급 계산
-  const totalMonthly = baseSalary + mealIncludable + transportIncludable + positionAllowance;
+  // 월급제: 기본급 + 수당으로 환산 시급 계산
+  const totalMonthly = baseSalary + mealAllowance + transportAllowance + positionAllowance;
   const calculatedHourly = Math.round(totalMonthly / standardMonthlyHours);
 
   if (calculatedHourly < hourly) {
