@@ -48,6 +48,13 @@ export const authConfig = {
         }
       }
 
+      // /accounting: admin만 허용 (Phase 4)
+      if (pathname.startsWith("/accounting")) {
+        if (role !== "admin") {
+          return Response.redirect(new URL("/dashboard", request.nextUrl));
+        }
+      }
+
       // 그 외 모든 인증된 사용자 허용
       return true;
     },

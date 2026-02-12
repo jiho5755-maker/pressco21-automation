@@ -12,4 +12,5 @@ export interface NavItem {
 export interface NavGroup {
   label: string;
   items: NavItem[];
+  requiredRole?: string; // RBAC: 특정 역할만 접근 가능 (admin/manager/viewer)
 }

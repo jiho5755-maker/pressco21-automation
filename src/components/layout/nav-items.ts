@@ -9,6 +9,9 @@ import {
   HandCoins,
   FileText,
   Settings,
+  Calculator,
+  TrendingUp,
+  PiggyBank,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
 
@@ -78,6 +81,36 @@ export const navGroups: NavGroup[] = [
         href: "/documents",
         icon: FileText,
         description: "근로계약서 및 전자결재",
+      },
+    ],
+  },
+  {
+    label: "회계",
+    requiredRole: "admin", // Admin 전용 그룹
+    items: [
+      {
+        title: "회계 대시보드",
+        href: "/accounting",
+        icon: Calculator,
+        description: "원천징수 및 퇴직금 추계",
+      },
+      {
+        title: "원천징수 세액",
+        href: "/accounting/withholding-tax",
+        icon: Receipt,
+        description: "월별 원천징수 세액 집계",
+      },
+      {
+        title: "급여 통계",
+        href: "/accounting/payroll-stats",
+        icon: TrendingUp,
+        description: "부서별/직급별 급여 분석",
+      },
+      {
+        title: "퇴직금 추계",
+        href: "/accounting/severance-pay",
+        icon: PiggyBank,
+        description: "직원별 퇴직금 추계액",
       },
     ],
   },
