@@ -81,9 +81,33 @@ export function CompanyDocumentTable({
     executeDelete({ id: deletingDocument.id });
   };
 
-  const handleDownload = (document: CompanyDocumentWithUploader) => {
-    // 새 창에서 다운로드 (Vercel Blob URL)
-    window.open(document.fileUrl, "_blank");
+  const handleDownload = async (doc: CompanyDocumentWithUploader) => {
+    try {
+      // Vercel Blob URL에서 파일 가져오기
+      const response = await fetch(doc.fileUrl);
+      if (!response.ok) throw new Error("파일 다운로드 실패");
+
+      const blob = await response.blob();
+
+      // Blob URL 생성
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // 임시 <a> 태그 생성하여 다운로드 트리거
+      const link = window.document.createElement("a");
+      link.href = blobUrl;
+      link.download = doc.fileName; // 원본 파일명으로 다운로드
+      window.document.body.appendChild(link);
+      link.click();
+
+      // 정리
+      window.document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success("다운로드 시작");
+    } catch (error) {
+      console.error("[handleDownload] 다운로드 실패", error);
+      toast.error("파일 다운로드 중 오류가 발생했습니다.");
+    }
   };
 
   const handlePreview = (document: CompanyDocumentWithUploader) => {

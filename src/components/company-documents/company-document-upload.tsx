@@ -1,15 +1,14 @@
-// 회사 공용 문서 업로드 컴포넌트 (Admin 전용)
+// 회사 공용 문서 업로드 컴포넌트 (Admin 전용, 다중 파일 지원)
 "use client";
 
 import { useState, useCallback } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Upload, FileUp, X } from "lucide-react";
+import { Upload, FileUp, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,6 +25,17 @@ import {
 } from "@/lib/file-upload-validator";
 import { COMPANY_DOCUMENT_CATEGORIES } from "@/lib/constants";
 
+interface FileWithMetadata {
+  file: File;
+  id: string; // 임시 ID (Date.now() + index)
+  title: string;
+  category: string;
+  description: string;
+  uploading: boolean;
+  uploaded: boolean;
+  error?: string;
+}
+
 interface CompanyDocumentUploadProps {
   onUploadSuccess?: () => void;
 }
@@ -33,45 +43,48 @@ interface CompanyDocumentUploadProps {
 export function CompanyDocumentUpload({
   onUploadSuccess,
 }: CompanyDocumentUploadProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<string>("");
-  const [description, setDescription] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<FileWithMetadata[]>([]);
+  const [isUploadingAll, setIsUploadingAll] = useState(false);
 
-  const { execute, isPending } = useAction(uploadCompanyDocument, {
+  const { execute } = useAction(uploadCompanyDocument, {
     onSuccess: () => {
-      toast.success("문서 업로드 성공");
-      // 폼 초기화
-      setSelectedFile(null);
-      setTitle("");
-      setCategory("");
-      setDescription("");
-      onUploadSuccess?.();
+      // 개별 파일 업로드 성공 시 처리는 handleUploadAll에서
     },
-    onError: ({ error }) => {
-      toast.error(error.serverError || "문서 업로드 실패");
+    onError: () => {
+      // 개별 파일 업로드 실패 시 처리는 handleUploadAll에서
     },
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+    if (acceptedFiles.length === 0) return;
 
-    // 클라이언트 검증
-    const validation = validateUploadFile(file);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
+    const newFiles: FileWithMetadata[] = [];
 
-    setSelectedFile(file);
+    for (const file of acceptedFiles) {
+      // 클라이언트 검증
+      const validation = validateUploadFile(file);
+      if (!validation.valid) {
+        toast.error(`${file.name}: ${validation.error}`);
+        continue;
+      }
 
-    // 파일명에서 제목 자동 추출 (확장자 제거)
-    if (!title) {
+      // 파일명에서 제목 자동 추출 (확장자 제거)
       const fileName = file.name.replace(/\.[^/.]+$/, "");
-      setTitle(fileName);
+
+      newFiles.push({
+        file,
+        id: `${Date.now()}-${Math.random()}`,
+        title: fileName,
+        category: "", // 빈 값, 사용자가 선택해야 함
+        description: "",
+        uploading: false,
+        uploaded: false,
+      });
     }
-  }, [title]);
+
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+    toast.success(`${newFiles.length}개 파일이 추가되었습니다.`);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -83,35 +96,100 @@ export function CompanyDocumentUpload({
         [".docx"],
     },
     maxSize: MAX_FILE_SIZE,
-    multiple: false,
-    disabled: isPending,
+    multiple: true, // 다중 파일 허용
+    disabled: isUploadingAll,
   });
 
-  const handleUpload = async () => {
-    // 유효성 검증
-    if (!selectedFile) {
-      toast.error("파일을 선택해주세요.");
-      return;
-    }
-    if (!title.trim()) {
-      toast.error("제목을 입력해주세요.");
-      return;
-    }
-    if (!category) {
-      toast.error("카테고리를 선택해주세요.");
-      return;
-    }
-
-    execute({
-      title: title.trim(),
-      category: category as "BANK" | "BUSINESS_LICENSE" | "SEAL" | "TAX" | "OTHER",
-      description: description.trim() || undefined,
-      file: selectedFile,
-    });
+  const handleRemoveFile = (id: string) => {
+    setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
+  const handleUpdateMetadata = (
+    id: string,
+    field: "title" | "category" | "description",
+    value: string
+  ) => {
+    setSelectedFiles((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, [field]: value } : f))
+    );
+  };
+
+  const handleUploadAll = async () => {
+    // 유효성 검증
+    const invalidFiles = selectedFiles.filter(
+      (f) => !f.title.trim() || !f.category
+    );
+    if (invalidFiles.length > 0) {
+      toast.error("모든 파일의 제목과 카테고리를 입력해주세요.");
+      return;
+    }
+
+    setIsUploadingAll(true);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // 순차 업로드
+    for (const fileData of selectedFiles) {
+      if (fileData.uploaded) continue; // 이미 업로드된 파일 스킵
+
+      // 업로딩 상태 표시
+      setSelectedFiles((prev) =>
+        prev.map((f) => (f.id === fileData.id ? { ...f, uploading: true } : f))
+      );
+
+      try {
+        await execute({
+          title: fileData.title.trim(),
+          category: fileData.category as
+            | "BANK"
+            | "BUSINESS_LICENSE"
+            | "SEAL"
+            | "TAX"
+            | "OTHER",
+          description: fileData.description.trim() || undefined,
+          file: fileData.file,
+        });
+
+        // 오류 없이 완료되면 성공
+        successCount++;
+        setSelectedFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileData.id
+              ? { ...f, uploading: false, uploaded: true }
+              : f
+          )
+        );
+      } catch (error) {
+        failCount++;
+        console.error(`[Upload] ${fileData.file.name} 업로드 실패`, error);
+        setSelectedFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileData.id
+              ? {
+                  ...f,
+                  uploading: false,
+                  error: "업로드 중 오류 발생",
+                }
+              : f
+          )
+        );
+      }
+    }
+
+    setIsUploadingAll(false);
+
+    // 결과 알림
+    if (successCount > 0 && failCount === 0) {
+      toast.success(`${successCount}개 문서 업로드 완료`);
+      // 성공한 파일 제거
+      setSelectedFiles((prev) => prev.filter((f) => !f.uploaded));
+      onUploadSuccess?.();
+    } else if (successCount > 0 && failCount > 0) {
+      toast.warning(`${successCount}개 성공, ${failCount}개 실패`);
+    } else if (failCount > 0) {
+      toast.error(`${failCount}개 파일 업로드 실패`);
+    }
   };
 
   return (
@@ -125,7 +203,7 @@ export function CompanyDocumentUpload({
       <CardContent className="space-y-4">
         {/* 파일 선택 */}
         <div className="space-y-2">
-          <Label>파일 선택</Label>
+          <Label>파일 선택 (여러 개 가능)</Label>
           <div
             {...getRootProps()}
             className={`
@@ -136,7 +214,7 @@ export function CompanyDocumentUpload({
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
                   : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
               }
-              ${isPending ? "opacity-50 cursor-not-allowed" : ""}
+              ${isUploadingAll ? "opacity-50 cursor-not-allowed" : ""}
             `}
           >
             <input {...getInputProps()} />
@@ -154,95 +232,156 @@ export function CompanyDocumentUpload({
                   하거나 파일을 드래그하여 업로드
                 </p>
                 <p className="text-xs">
-                  지원 형식: PDF, JPG, PNG, DOCX (최대 {formatFileSize(MAX_FILE_SIZE)})
+                  지원 형식: PDF, JPG, PNG, DOCX (최대{" "}
+                  {formatFileSize(MAX_FILE_SIZE)})
                 </p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* 선택된 파일 표시 */}
-          {selectedFile && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <FileUp className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatFileSize(selectedFile.size)}
-                  </p>
+        {/* 선택된 파일 목록 */}
+        {selectedFiles.length > 0 && (
+          <div className="space-y-3">
+            <Label>
+              선택된 파일 ({selectedFiles.filter((f) => !f.uploaded).length}
+              개)
+            </Label>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {selectedFiles.map((fileData) => (
+                <div
+                  key={fileData.id}
+                  className={`p-3 border rounded-lg space-y-2 ${
+                    fileData.uploaded
+                      ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                      : fileData.error
+                        ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                        : "bg-gray-50 dark:bg-gray-900"
+                  }`}
+                >
+                  {/* 파일 정보 및 삭제 버튼 */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {fileData.uploading ? (
+                        <Loader2 className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
+                      ) : fileData.uploaded ? (
+                        <FileUp className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : fileData.error ? (
+                        <X className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      ) : (
+                        <FileUp className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {fileData.file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(fileData.file.size)}
+                        </p>
+                        {fileData.error && (
+                          <p className="text-xs text-red-600 mt-1">
+                            {fileData.error}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {!fileData.uploaded && !fileData.uploading && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFile(fileData.id)}
+                        disabled={isUploadingAll}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* 메타데이터 입력 (업로드 전에만) */}
+                  {!fileData.uploaded && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t">
+                      {/* 제목 */}
+                      <Input
+                        placeholder="제목 *"
+                        value={fileData.title}
+                        onChange={(e) =>
+                          handleUpdateMetadata(
+                            fileData.id,
+                            "title",
+                            e.target.value
+                          )
+                        }
+                        disabled={isUploadingAll || fileData.uploading}
+                        className="text-sm"
+                      />
+
+                      {/* 카테고리 */}
+                      <Select
+                        value={fileData.category}
+                        onValueChange={(value) =>
+                          handleUpdateMetadata(fileData.id, "category", value)
+                        }
+                        disabled={isUploadingAll || fileData.uploading}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="카테고리 *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(COMPANY_DOCUMENT_CATEGORIES).map(
+                            ([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+
+                      {/* 설명 */}
+                      <Input
+                        placeholder="설명 (선택)"
+                        value={fileData.description}
+                        onChange={(e) =>
+                          handleUpdateMetadata(
+                            fileData.id,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        disabled={isUploadingAll || fileData.uploading}
+                        className="text-sm"
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleRemoveFile}
-                disabled={isPending}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* 제목 */}
-        <div className="space-y-2">
-          <Label htmlFor="title">
-            제목 <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="title"
-            placeholder="예: 신한은행 통장사본"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={isPending}
-            maxLength={200}
-          />
-        </div>
-
-        {/* 카테고리 */}
-        <div className="space-y-2">
-          <Label htmlFor="category">
-            카테고리 <span className="text-red-500">*</span>
-          </Label>
-          <Select value={category} onValueChange={setCategory} disabled={isPending}>
-            <SelectTrigger id="category">
-              <SelectValue placeholder="카테고리 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(COMPANY_DOCUMENT_CATEGORIES).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* 설명 (선택) */}
-        <div className="space-y-2">
-          <Label htmlFor="description">설명 (선택)</Label>
-          <Textarea
-            id="description"
-            placeholder="추가 설명을 입력하세요..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isPending}
-            rows={3}
-          />
-        </div>
+            </div>
+          </div>
+        )}
 
         {/* 업로드 버튼 */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleUpload}
-            disabled={isPending || !selectedFile || !title.trim() || !category}
-          >
-            {isPending ? "업로드 중..." : "업로드"}
-          </Button>
-        </div>
+        {selectedFiles.filter((f) => !f.uploaded).length > 0 && (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedFiles([])}
+              disabled={isUploadingAll}
+            >
+              모두 취소
+            </Button>
+            <Button onClick={handleUploadAll} disabled={isUploadingAll}>
+              {isUploadingAll ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  업로드 중...
+                </>
+              ) : (
+                `모두 업로드 (${selectedFiles.filter((f) => !f.uploaded).length}개)`
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

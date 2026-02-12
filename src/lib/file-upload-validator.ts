@@ -22,9 +22,9 @@ export const FILE_TYPE_EXTENSIONS: Record<string, string> = {
 };
 
 /**
- * 최대 파일 크기 (5MB)
+ * 최대 파일 크기 (20MB)
  */
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB in bytes
 
 /**
  * 파일 검증 결과
