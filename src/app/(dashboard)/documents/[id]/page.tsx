@@ -28,6 +28,9 @@ export default async function DocumentDetailPage({
         include: { approver: true },
         orderBy: { approvalOrder: "asc" },
       },
+      attachments: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 

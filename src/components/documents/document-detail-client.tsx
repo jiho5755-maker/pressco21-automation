@@ -48,7 +48,9 @@ import {
   archiveDocument,
   downloadEmploymentContract,
 } from "@/actions/document-actions";
-import type { Document, Employee, Department, User, Approval } from "@prisma/client";
+import { AttachmentUpload } from "./attachment-upload";
+import { AttachmentList } from "./attachment-list";
+import type { Document, Employee, Department, User, Approval, Attachment } from "@prisma/client";
 import type { EmploymentContractContent } from "@/types/document";
 
 interface DocumentDetailClientProps {
@@ -56,6 +58,7 @@ interface DocumentDetailClientProps {
     employee: Employee & { department: Department };
     creator: User;
     approvals: Array<Approval & { approver: User }>;
+    attachments: Attachment[];
   };
   currentUserId: string;
   currentUserRole: string;
@@ -571,6 +574,33 @@ export function DocumentDetailClient({
               </CardContent>
             </Card>
           )}
+
+          {/* 첨부파일 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">첨부파일</CardTitle>
+              <CardDescription>
+                {doc.attachments.length}개 파일 첨부됨 (최대 5개, 각 5MB 이하)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* 업로드 (DRAFT 상태, 작성자/Admin만) */}
+              {doc.status === "DRAFT" &&
+                (doc.createdBy === currentUserId || isAdmin) && (
+                  <AttachmentUpload
+                    documentId={doc.id}
+                    onUploadSuccess={() => router.refresh()}
+                  />
+                )}
+
+              {/* 첨부파일 목록 */}
+              <AttachmentList
+                attachments={doc.attachments}
+                canDelete={doc.status === "DRAFT" && isAdmin}
+                onDeleteSuccess={() => router.refresh()}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* 우측: 결재 현황 + 액션 */}
