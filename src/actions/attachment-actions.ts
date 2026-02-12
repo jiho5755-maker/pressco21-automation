@@ -3,7 +3,7 @@
 
 import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import {
   authActionClient,
   adminActionClient,
@@ -148,9 +148,16 @@ export const deleteAttachment = adminActionClient
     }
 
     try {
-      // 2. Vercel Blob에서 삭제 (선택적)
-      // Note: Vercel Blob의 del() API는 별도 패키지 필요
-      // MVP에서는 DB 레코드만 삭제하고 Blob은 수동 관리
+      // 2. Vercel Blob에서 파일 삭제
+      try {
+        await del(attachment.fileUrl);
+      } catch (blobError) {
+        console.error("[deleteAttachment] Blob 삭제 실패", {
+          fileUrl: attachment.fileUrl,
+          error: blobError,
+        });
+        // Blob 삭제 실패해도 DB는 삭제 진행 (일관성 유지)
+      }
 
       // 3. DB에서 첨부파일 레코드 삭제
       await prisma.attachment.delete({
