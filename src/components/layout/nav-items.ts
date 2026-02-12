@@ -92,7 +92,7 @@ export const navGroups: NavGroup[] = [
         title: "회계 대시보드",
         href: "/accounting",
         icon: Calculator,
-        description: "원천징수 및 퇴직금 추계",
+        description: "원천징수 및 DC형 부담금",
       },
       {
         title: "원천징수 세액",
@@ -107,10 +107,10 @@ export const navGroups: NavGroup[] = [
         description: "부서별/직급별 급여 분석",
       },
       {
-        title: "퇴직금 추계",
-        href: "/accounting/severance-pay",
+        title: "DC형 퇴직연금",
+        href: "/accounting/dc-pension",
         icon: PiggyBank,
-        description: "직원별 퇴직금 추계액",
+        description: "재직자별 월 부담금",
       },
     ],
   },

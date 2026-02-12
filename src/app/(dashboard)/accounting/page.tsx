@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Receipt, TrendingUp, Wallet } from "lucide-react";
-import { calculateSeverancePay } from "@/lib/severance-pay-calculator";
+import { calculateDCContribution, calculateMonthlyDCTotal } from "@/lib/dc-pension-calculator";
 import { subMonths } from "date-fns";
 
 export default async function AccountingPage() {
@@ -81,8 +81,8 @@ export default async function AccountingPage() {
     select: { employeeId: true, totalGross: true, year: true, month: true },
   });
 
-  // 퇴직금 추계액 총액 계산
-  const totalSeverancePay = employees.reduce((sum, emp) => {
+  // DC형 퇴직연금 월 부담금 총액 계산
+  const dcContributions = employees.map((emp) => {
     const recentPayrolls = allPayrolls
       .filter((p) => p.employeeId === emp.id)
       .sort((a, b) => {
@@ -91,14 +91,14 @@ export default async function AccountingPage() {
       })
       .slice(0, 3);
 
-    const result = calculateSeverancePay(emp, recentPayrolls);
-    return sum + result.severancePay;
-  }, 0);
+    return calculateDCContribution(emp, recentPayrolls);
+  });
+  const totalMonthlyDCContribution = calculateMonthlyDCTotal(dcContributions);
 
   const stats = {
     totalLaborCost,
     totalWithholdingTax,
-    totalSeverancePay,
+    totalMonthlyDCContribution,
     avgSalary,
   };
 
@@ -151,14 +151,14 @@ export default async function AccountingPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5" />
-              퇴직금 추계
+              DC형 퇴직연금
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              재직자별 퇴직금 추계액을 계산하고 확인합니다.
+              재직자별 월 부담금을 계산하고 확인합니다.
             </p>
-            <Link href="/accounting/severance-pay">
+            <Link href="/accounting/dc-pension">
               <Button className="w-full">조회하기</Button>
             </Link>
           </CardContent>
