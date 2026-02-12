@@ -61,6 +61,8 @@ const baseSchema = z.object({
   type: z.enum([
     "EMPLOYMENT_CONTRACT",
     "PAYSLIP",
+    "EMPLOYMENT_CERTIFICATE",
+    "CAREER_CERTIFICATE",
     "RESIGNATION",
     "NOTICE",
     "OTHER",
@@ -131,6 +133,18 @@ const payslipSchema = baseSchema.extend({
   month: z.number().int().min(1).max(12),
 });
 
+// 재직증명서 스키마
+const employmentCertificateSchema = baseSchema.extend({
+  type: z.literal("EMPLOYMENT_CERTIFICATE"),
+  issuePurpose: z.string().default("제출용"),
+});
+
+// 경력증명서 스키마
+const careerCertificateSchema = baseSchema.extend({
+  type: z.literal("CAREER_CERTIFICATE"),
+  issuePurpose: z.string().default("제출용"),
+});
+
 // 공지사항 스키마
 const noticeSchema = baseSchema.extend({
   type: z.literal("NOTICE"),
@@ -146,6 +160,8 @@ const otherSchema = baseSchema.extend({
 const documentFormSchema = z.discriminatedUnion("type", [
   employmentContractSchema,
   payslipSchema,
+  employmentCertificateSchema,
+  careerCertificateSchema,
   noticeSchema,
   otherSchema,
 ]);
@@ -156,6 +172,8 @@ type DocumentFormData = z.infer<typeof documentFormSchema>;
 type PartialDocumentFormData = Partial<
   z.infer<typeof employmentContractSchema> &
     z.infer<typeof payslipSchema> &
+    z.infer<typeof employmentCertificateSchema> &
+    z.infer<typeof careerCertificateSchema> &
     z.infer<typeof noticeSchema> &
     z.infer<typeof otherSchema>
 >;
@@ -399,6 +417,10 @@ export function DocumentFormDialog({
         year: validatedData.year,
         month: validatedData.month,
       });
+    } else if (validatedData.type === "EMPLOYMENT_CERTIFICATE" || validatedData.type === "CAREER_CERTIFICATE") {
+      content = JSON.stringify({
+        issuePurpose: validatedData.issuePurpose || "제출용",
+      });
     } else {
       content = JSON.stringify({
         content: validatedData.content || "",
@@ -491,6 +513,8 @@ export function DocumentFormDialog({
                           근로계약서
                         </SelectItem>
                         <SelectItem value="PAYSLIP">임금명세서</SelectItem>
+                        <SelectItem value="EMPLOYMENT_CERTIFICATE">재직증명서</SelectItem>
+                        <SelectItem value="CAREER_CERTIFICATE">경력증명서</SelectItem>
                         <SelectItem value="NOTICE">공지사항</SelectItem>
                         <SelectItem value="OTHER">기타</SelectItem>
                       </SelectContent>
@@ -1396,6 +1420,58 @@ export function DocumentFormDialog({
                     )}
                   />
                 </div>
+              </div>
+            )}
+
+            {/* 재직증명서 필드 */}
+            {selectedType === "EMPLOYMENT_CERTIFICATE" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">2. 발급 정보</h3>
+                <FormField
+                  control={form.control}
+                  name="issuePurpose"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>발급 용도</FormLabel>
+                      <FormControl>
+                        <Input placeholder="예: 은행 제출용" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    재직증명서는 현재 재직 중인 직원만 신청 가능합니다.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {/* 경력증명서 필드 */}
+            {selectedType === "CAREER_CERTIFICATE" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">2. 발급 정보</h3>
+                <FormField
+                  control={form.control}
+                  name="issuePurpose"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>발급 용도</FormLabel>
+                      <FormControl>
+                        <Input placeholder="예: 이직 제출용" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    경력증명서는 퇴사한 직원만 신청 가능합니다.
+                  </AlertDescription>
+                </Alert>
               </div>
             )}
 
