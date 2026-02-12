@@ -109,24 +109,60 @@ export const confirmPayrollRecords = authActionClient
       throw new ActionError("관리자만 급여를 확정할 수 있습니다.");
     }
 
-    // 일괄 확정 (NULL 체크 포함)
-    const result = await prisma.payrollRecord.updateMany({
-      where: { id: { in: ids } },
-      data: {
-        isConfirmed: true,
-        confirmedAt: new Date(),
-        confirmedBy: ctx.userId ?? null, // NULL 체크
-      },
+    // 트랜잭션: PayrollRecord 확정 + Document 생성
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. PayrollRecord 확정
+      const confirmedRecords = await tx.payrollRecord.updateMany({
+        where: { id: { in: ids } },
+        data: {
+          isConfirmed: true,
+          confirmedAt: new Date(),
+          confirmedBy: ctx.userId ?? null,
+        },
+      });
+
+      // 2. 각 PayrollRecord에 대해 임금명세서 Document 생성
+      const documents = [];
+      for (const id of ids) {
+        const record = await tx.payrollRecord.findUnique({
+          where: { id },
+          select: { employeeId: true, year: true, month: true },
+        });
+
+        if (!record) continue;
+
+        // 임금명세서 Document 생성 (ISSUED 상태로 즉시 발급)
+        const document = await tx.document.create({
+          data: {
+            title: `${record.year}년 ${record.month}월 임금명세서`,
+            type: "PAYSLIP",
+            status: "ISSUED", // 결재 불필요, 즉시 발급
+            employeeId: record.employeeId,
+            createdBy: ctx.userId ?? "",
+            content: JSON.stringify({
+              year: record.year,
+              month: record.month,
+              payrollRecordId: id,
+            }),
+            issuedAt: new Date(),
+          },
+        });
+
+        documents.push(document);
+      }
+
+      return { count: confirmedRecords.count, documents };
     });
 
-    // 알림 발송 (각 직원에게 급여명세서 발급 알림)
+    // 3. 알림 발송 (각 직원에게 급여명세서 발급 알림)
     for (const id of ids) {
       await notifyPayslipReady(id);
     }
 
     revalidatePath("/payroll");
+    revalidatePath("/documents");
 
-    return { success: true, count: result.count };
+    return { success: true, ...result };
   });
 
 /**

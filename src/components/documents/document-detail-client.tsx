@@ -47,6 +47,9 @@ import {
   issueDocument,
   archiveDocument,
   downloadEmploymentContract,
+  downloadPayslip,
+  downloadEmploymentCertificate,
+  downloadCareerCertificate,
 } from "@/actions/document-actions";
 import { AttachmentUpload } from "./attachment-upload";
 import { AttachmentList } from "./attachment-list";
@@ -176,27 +179,60 @@ export function DocumentDetailClient({
     }
   );
 
-  const { execute: executeDownload, isPending: isDownloadPending } = useAction(
+  // PDF 다운로드 핸들러 (공통 로직)
+  const handlePDFDownload = (data: { base64?: string; fileName?: string } | undefined) => {
+    if (data?.base64 && data?.fileName) {
+      // base64 → Blob → 다운로드
+      const binaryString = atob(data.base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      link.href = url;
+      link.download = data.fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF가 다운로드되었습니다.");
+    }
+  };
+
+  const { execute: executeDownloadContract, isPending: isDownloadContractPending } = useAction(
     downloadEmploymentContract,
     {
-      onSuccess: ({ data }) => {
-        if (data?.base64 && data?.fileName) {
-          // base64 → Blob → 다운로드
-          const binaryString = atob(data.base64);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const blob = new Blob([bytes], { type: "application/pdf" });
-          const url = URL.createObjectURL(blob);
-          const link = window.document.createElement("a");
-          link.href = url;
-          link.download = data.fileName;
-          link.click();
-          URL.revokeObjectURL(url);
-          toast.success("PDF가 다운로드되었습니다.");
-        }
+      onSuccess: ({ data }) => handlePDFDownload(data),
+      onError: ({ error }) => {
+        toast.error(error.serverError || "PDF 생성 중 오류가 발생했습니다.");
       },
+    }
+  );
+
+  const { execute: executeDownloadPayslip, isPending: isDownloadPayslipPending } = useAction(
+    downloadPayslip,
+    {
+      onSuccess: ({ data }) => handlePDFDownload(data),
+      onError: ({ error }) => {
+        toast.error(error.serverError || "PDF 생성 중 오류가 발생했습니다.");
+      },
+    }
+  );
+
+  const { execute: executeDownloadEmploymentCert, isPending: isDownloadEmploymentCertPending } = useAction(
+    downloadEmploymentCertificate,
+    {
+      onSuccess: ({ data }) => handlePDFDownload(data),
+      onError: ({ error }) => {
+        toast.error(error.serverError || "PDF 생성 중 오류가 발생했습니다.");
+      },
+    }
+  );
+
+  const { execute: executeDownloadCareerCert, isPending: isDownloadCareerCertPending } = useAction(
+    downloadCareerCertificate,
+    {
+      onSuccess: ({ data }) => handlePDFDownload(data),
       onError: ({ error }) => {
         toast.error(error.serverError || "PDF 생성 중 오류가 발생했습니다.");
       },
@@ -249,15 +285,60 @@ export function DocumentDetailClient({
           <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          {/* PDF 다운로드 (근로계약서만) */}
+          {/* PDF 다운로드 (근로계약서, 임금명세서) */}
           {doc.type === "EMPLOYMENT_CONTRACT" && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => executeDownload({ documentId: doc.id })}
-              disabled={isDownloadPending}
+              onClick={() => executeDownloadContract({ documentId: doc.id })}
+              disabled={isDownloadContractPending}
             >
-              {isDownloadPending ? (
+              {isDownloadContractPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              PDF 다운로드
+            </Button>
+          )}
+          {doc.type === "PAYSLIP" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => executeDownloadPayslip({ documentId: doc.id })}
+              disabled={isDownloadPayslipPending}
+            >
+              {isDownloadPayslipPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              PDF 다운로드
+            </Button>
+          )}
+          {doc.type === "EMPLOYMENT_CERTIFICATE" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => executeDownloadEmploymentCert({ documentId: doc.id })}
+              disabled={isDownloadEmploymentCertPending}
+            >
+              {isDownloadEmploymentCertPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              PDF 다운로드
+            </Button>
+          )}
+          {doc.type === "CAREER_CERTIFICATE" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => executeDownloadCareerCert({ documentId: doc.id })}
+              disabled={isDownloadCareerCertPending}
+            >
+              {isDownloadCareerCertPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Download className="mr-2 h-4 w-4" />

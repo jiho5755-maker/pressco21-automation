@@ -17,6 +17,8 @@ const createDocumentSchema = z.object({
   type: z.enum([
     "EMPLOYMENT_CONTRACT",
     "PAYSLIP",
+    "EMPLOYMENT_CERTIFICATE",
+    "CAREER_CERTIFICATE",
     "RESIGNATION",
     "NOTICE",
     "OTHER",
@@ -628,5 +630,227 @@ export const downloadEmploymentContract = authActionClient
       success: true,
       base64,
       fileName: `근로계약서_${document.employee.name}.pdf`,
+    };
+  });
+
+// ── 임금명세서 다운로드 스키마 ──
+const downloadPayslipSchema = z.object({
+  documentId: z.string(),
+});
+
+/**
+ * 임금명세서 PDF 다운로드
+ */
+export const downloadPayslip = authActionClient
+  .inputSchema(downloadPayslipSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    // 1. 문서 조회
+    const document = await prisma.document.findUnique({
+      where: { id: parsedInput.documentId },
+      include: {
+        employee: {
+          include: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new ActionError("문서를 찾을 수 없습니다.");
+    }
+
+    if (document.type !== "PAYSLIP") {
+      throw new ActionError("임금명세서만 다운로드 가능합니다.");
+    }
+
+    // 2. RBAC: 본인 또는 Admin만
+    if (ctx.userRole !== "admin" && document.employee.userId !== ctx.userId) {
+      throw new ActionError("본인의 급여명세서만 조회할 수 있습니다.");
+    }
+
+    // 3. Content 파싱 → PayrollRecord 조회
+    const content = JSON.parse(document.content) as {
+      year: number;
+      month: number;
+      payrollRecordId: string;
+    };
+
+    const record = await prisma.payrollRecord.findUnique({
+      where: { id: content.payrollRecordId },
+      include: {
+        employee: {
+          include: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    if (!record) {
+      throw new ActionError("급여 기록을 찾을 수 없습니다.");
+    }
+
+    // 4. PDF 생성 (dynamic import)
+    const { renderToBuffer } = await import("@react-pdf/renderer");
+    const { PayslipPDF } = await import("@/components/documents/payslip-pdf");
+    const React = await import("react");
+
+    const element = React.createElement(PayslipPDF, { record });
+
+    // @react-pdf/renderer 타입과 React 19 타입 불일치 해결
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await (renderToBuffer as any)(element);
+
+    // 5. base64 인코딩
+    const base64 = Buffer.from(pdfBuffer).toString("base64");
+
+    return {
+      success: true,
+      base64,
+      fileName: `임금명세서_${content.year}년${content.month}월_${record.employee.name}.pdf`,
+    };
+  });
+
+// ── 재직증명서 다운로드 스키마 ──
+const downloadEmploymentCertificateSchema = z.object({
+  documentId: z.string(),
+});
+
+/**
+ * 재직증명서 PDF 다운로드
+ */
+export const downloadEmploymentCertificate = authActionClient
+  .inputSchema(downloadEmploymentCertificateSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    // 1. 문서 조회
+    const document = await prisma.document.findUnique({
+      where: { id: parsedInput.documentId },
+      include: {
+        employee: {
+          include: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new ActionError("문서를 찾을 수 없습니다.");
+    }
+
+    if (document.type !== "EMPLOYMENT_CERTIFICATE") {
+      throw new ActionError("재직증명서만 다운로드 가능합니다.");
+    }
+
+    // 2. 재직 중인지 검증
+    if (document.employee.status === "RESIGNED") {
+      throw new ActionError("퇴사자는 경력증명서를 신청하세요.");
+    }
+
+    // 3. RBAC: 본인 또는 Admin/Manager
+    if (
+      ctx.userRole === "viewer" &&
+      document.employee.userId !== ctx.userId
+    ) {
+      throw new ActionError("본인의 증명서만 조회할 수 있습니다.");
+    }
+
+    // 4. PDF 생성 (dynamic import)
+    const { renderToBuffer } = await import("@react-pdf/renderer");
+    const { EmploymentCertificatePDF } = await import(
+      "@/components/documents/employment-certificate-pdf"
+    );
+    const React = await import("react");
+
+    const element = React.createElement(EmploymentCertificatePDF, {
+      employee: document.employee,
+      issueDate: new Date(),
+    });
+
+    // @react-pdf/renderer 타입과 React 19 타입 불일치 해결
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await (renderToBuffer as any)(element);
+
+    // 5. base64 인코딩
+    const base64 = Buffer.from(pdfBuffer).toString("base64");
+
+    return {
+      success: true,
+      base64,
+      fileName: `재직증명서_${document.employee.name}.pdf`,
+    };
+  });
+
+// ── 경력증명서 다운로드 스키마 ──
+const downloadCareerCertificateSchema = z.object({
+  documentId: z.string(),
+});
+
+/**
+ * 경력증명서 PDF 다운로드
+ */
+export const downloadCareerCertificate = authActionClient
+  .inputSchema(downloadCareerCertificateSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    // 1. 문서 조회
+    const document = await prisma.document.findUnique({
+      where: { id: parsedInput.documentId },
+      include: {
+        employee: {
+          include: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new ActionError("문서를 찾을 수 없습니다.");
+    }
+
+    if (document.type !== "CAREER_CERTIFICATE") {
+      throw new ActionError("경력증명서만 다운로드 가능합니다.");
+    }
+
+    // 2. 퇴사자인지 검증
+    if (
+      document.employee.status !== "RESIGNED" ||
+      !document.employee.resignDate
+    ) {
+      throw new ActionError("재직자는 재직증명서를 신청하세요.");
+    }
+
+    // 3. RBAC: 본인 또는 Admin/Manager
+    if (
+      ctx.userRole === "viewer" &&
+      document.employee.userId !== ctx.userId
+    ) {
+      throw new ActionError("본인의 증명서만 조회할 수 있습니다.");
+    }
+
+    // 4. PDF 생성 (dynamic import)
+    const { renderToBuffer } = await import("@react-pdf/renderer");
+    const { CareerCertificatePDF } = await import(
+      "@/components/documents/career-certificate-pdf"
+    );
+    const React = await import("react");
+
+    const element = React.createElement(CareerCertificatePDF, {
+      employee: document.employee,
+      issueDate: new Date(),
+    });
+
+    // @react-pdf/renderer 타입과 React 19 타입 불일치 해결
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await (renderToBuffer as any)(element);
+
+    // 5. base64 인코딩
+    const base64 = Buffer.from(pdfBuffer).toString("base64");
+
+    return {
+      success: true,
+      base64,
+      fileName: `경력증명서_${document.employee.name}.pdf`,
     };
   });

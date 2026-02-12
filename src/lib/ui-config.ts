@@ -243,6 +243,16 @@ export const documentTypeConfig: Record<string, BadgeConfig> = {
     className:
       "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
   },
+  EMPLOYMENT_CERTIFICATE: {
+    label: "재직증명서",
+    className:
+      "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300",
+  },
+  CAREER_CERTIFICATE: {
+    label: "경력증명서",
+    className:
+      "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
+  },
   RESIGNATION: {
     label: "퇴직서류",
     className:

@@ -98,6 +98,8 @@ export const SUBSIDY_STATUS = {
 export const DOCUMENT_TYPES = {
   EMPLOYMENT_CONTRACT: "근로계약서",
   PAYSLIP: "임금명세서",
+  EMPLOYMENT_CERTIFICATE: "재직증명서",
+  CAREER_CERTIFICATE: "경력증명서",
   RESIGNATION: "퇴직서류",
   NOTICE: "공지사항",
   OTHER: "기타",
