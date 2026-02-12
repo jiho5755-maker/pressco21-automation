@@ -1,6 +1,5 @@
 // 설정 페이지 — 세션 기반 역할 표시
 import { auth } from "@/lib/auth";
-import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
   CardContent,
@@ -21,12 +20,7 @@ export default async function SettingsPage() {
   const role = session?.user?.role || "viewer";
 
   return (
-    <>
-      <PageHeader
-        title="설정"
-        description="프로필 정보와 시스템 설정을 관리합니다."
-      />
-
+    <div className="space-y-6">
       <div className="grid gap-6">
         {/* 프로필 정보 */}
         <Card>
@@ -84,6 +78,6 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

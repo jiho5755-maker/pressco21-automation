@@ -6,6 +6,7 @@ import { authActionClient, ActionError } from "@/lib/safe-action";
 import { prisma } from "@/lib/prisma";
 import { calculateMonthlyPayroll } from "@/lib/payroll-calculator";
 import ExcelJS from "exceljs";
+import { notifyPayslipReady } from "@/lib/notification-helper";
 
 // ── Zod 스키마 ──
 
@@ -117,6 +118,11 @@ export const confirmPayrollRecords = authActionClient
         confirmedBy: ctx.userId ?? null, // NULL 체크
       },
     });
+
+    // 알림 발송 (각 직원에게 급여명세서 발급 알림)
+    for (const id of ids) {
+      await notifyPayslipReady(id);
+    }
 
     revalidatePath("/payroll");
 

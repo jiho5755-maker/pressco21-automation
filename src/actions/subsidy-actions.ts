@@ -24,6 +24,7 @@ import {
   checkShortenedWorkHoursPayEligibility,
   checkPregnancyReducedHoursEligibility,
 } from "@/lib/subsidy-calculator";
+import { notifySubsidyApproved } from "@/lib/notification-helper";
 
 // ── 지원금 신청 생성 스키마 ──
 const createSubsidySchema = z.object({
@@ -440,6 +441,11 @@ export const approveSubsidy = managerActionClient
         rejectReason: parsedInput.rejectReason || null,
       },
     });
+
+    // 승인 시 알림 발송
+    if (parsedInput.action === "APPROVED") {
+      await notifySubsidyApproved(parsedInput.id);
+    }
 
     revalidatePath("/subsidies");
     revalidatePath("/dashboard");

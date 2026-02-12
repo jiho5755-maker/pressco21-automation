@@ -25,6 +25,7 @@ import {
   getDay,
   addHours,
 } from "date-fns";
+import { notifyAttendanceConfirmed } from "@/lib/notification-helper";
 
 // ─────────────────────────────────────────────
 // Zod 스키마
@@ -327,6 +328,24 @@ export const confirmAttendanceRecords = managerActionClient
         isConfirmed: true,
       },
     });
+
+    // 알림 발송 (각 직원에게)
+    if (ctx.userRole === "manager") {
+      // Manager인 경우 이미 records를 조회했음 (304-307줄)
+      const records = await prisma.attendanceRecord.findMany({
+        where: { id: { in: ids } },
+        include: { employee: true },
+      });
+
+      for (const record of records) {
+        await notifyAttendanceConfirmed(record.id);
+      }
+    } else {
+      // Admin인 경우 records를 다시 조회해야 함
+      for (const id of ids) {
+        await notifyAttendanceConfirmed(id);
+      }
+    }
 
     revalidatePath("/attendance");
 
