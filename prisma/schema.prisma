@@ -37,6 +37,9 @@ model User {
   approvals           Approval[]
   uploadedAttachments Attachment[]
 
+  // Phase 3-D: 알림 로그
+  receivedNotifications NotificationLog[] @relation("NotificationRecipient")
+
   employee Employee? // 1:1 관계 (직원 중 일부만 로그인 계정 보유)
 
   createdAt DateTime @default(now())
@@ -601,4 +604,53 @@ model Attachment {
 
   // ── 인덱스 ──
   @@index([documentId]) // 문서별 첨부파일 조회
+}
+
+// ─────────────────────────────────────────────
+// 알림 로그 (Phase 3-D: 이메일 발송 이력)
+// ─────────────────────────────────────────────
+
+model NotificationLog {
+  id String @id @default(cuid())
+
+  // ── 알림 유형 ──
+  type String // "APPROVAL_REQUEST"|"DOCUMENT_APPROVED"|"DOCUMENT_REJECTED"|"PAYSLIP_READY"|"SUBSIDY_APPROVED"|"LEAVE_APPROVED"|"SYSTEM"
+
+  // ── 수신자 ──
+  recipientId    String
+  recipient      User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientEmail String // 발송 시점 이메일 (User 삭제 시 이력 보존용)
+
+  // ── 이메일 제목 및 본문 ──
+  subject  String
+  htmlBody String // HTML 본문
+  textBody String? // 플레인 텍스트 본문 (선택)
+
+  // ── 발송 결과 ──
+  success   Boolean // 발송 성공 여부
+  emailId   String? // Resend 이메일 ID (재발송/추적용)
+  errorCode String? // 실패 시 에러 코드 (RATE_LIMIT, INVALID_EMAIL 등)
+  errorMessage String? // 실패 시 에러 메시지
+
+  // ── 발송 일시 ──
+  sentAt DateTime @default(now())
+
+  // ── 관련 엔티티 (선택) ──
+  relatedDocumentId  String? // 관련 문서 ID
+  relatedPayrollId   String? // 관련 급여 ID
+  relatedSubsidyId   String? // 관련 지원금 ID
+  relatedLeaveId     String? // 관련 휴가 ID
+
+  // ── 메타데이터 ──
+  metadata String? // JSON 저장 (추가 정보)
+
+  // ── 감사 추적 ──
+  createdAt DateTime @default(now())
+
+  // ── 인덱스 ──
+  @@index([recipientId, type]) // 수신자별 유형 조회
+  @@index([recipientId, sentAt]) // 수신자별 시간순 조회
+  @@index([type, sentAt]) // 유형별 통계
+  @@index([success, sentAt]) // 실패 건 조회
+  @@index([emailId]) // Resend 이메일 ID 조회
 }

@@ -30,6 +30,69 @@ function getResendClient() {
 // 이메일 발신자 정보
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "PRESSCO21 <admin@pressco21.com>";
 
+// ============================================================================
+// Phase 3-D Sub-Task 2-4: 알림 로깅 헬퍼 함수
+// ============================================================================
+
+/**
+ * 이메일 발송 이력을 NotificationLog에 기록
+ *
+ * @param params - 로깅 파라미터
+ * @returns void (로깅 실패해도 이메일 발송은 계속 진행)
+ */
+async function logNotification(params: {
+  type: string;
+  recipientId: string;
+  recipientEmail: string;
+  subject: string;
+  htmlBody: string;
+  textBody?: string;
+  success: boolean;
+  emailId?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  relatedDocumentId?: string;
+  relatedPayrollId?: string;
+  relatedSubsidyId?: string;
+  relatedLeaveId?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await prisma.notificationLog.create({
+      data: {
+        type: params.type,
+        recipientId: params.recipientId,
+        recipientEmail: params.recipientEmail,
+        subject: params.subject,
+        htmlBody: params.htmlBody,
+        textBody: params.textBody,
+        success: params.success,
+        emailId: params.emailId,
+        errorCode: params.errorCode,
+        errorMessage: params.errorMessage,
+        relatedDocumentId: params.relatedDocumentId,
+        relatedPayrollId: params.relatedPayrollId,
+        relatedSubsidyId: params.relatedSubsidyId,
+        relatedLeaveId: params.relatedLeaveId,
+        metadata: params.metadata ? JSON.stringify(params.metadata) : null,
+      },
+    });
+
+    console.log("[NotificationLog 저장 성공]", {
+      type: params.type,
+      recipientEmail: params.recipientEmail,
+      success: params.success,
+    });
+  } catch (error) {
+    console.error("[NotificationLog 저장 실패]", {
+      type: params.type,
+      recipientEmail: params.recipientEmail,
+      error,
+    });
+    // 로깅 실패해도 이메일 발송은 계속 진행
+  }
+}
+
 /**
  * 지원금 마감 알림 이메일 발송
  *
@@ -59,12 +122,13 @@ export async function sendSubsidyDeadlineReminder(
   subsidyId?: string
 ): Promise<NotificationResult> {
   try {
-    // 1. 직원 정보 조회
+    // 1. 직원 정보 조회 (userId 포함)
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
       select: {
         name: true,
         email: true,
+        userId: true,
       },
     });
 
@@ -79,6 +143,13 @@ export async function sendSubsidyDeadlineReminder(
       return {
         success: false,
         error: "직원의 이메일 주소가 없습니다.",
+      };
+    }
+
+    if (!employee.userId) {
+      return {
+        success: false,
+        error: "직원의 User 계정이 연결되지 않았습니다.",
       };
     }
 
@@ -124,11 +195,26 @@ export async function sendSubsidyDeadlineReminder(
     });
 
     // 6. 발송 결과 처리
+    const subject = `[긴급] ${subsidyTypeName} 신청 마감 D-${dDay}일 전`;
+
     if (result.error) {
       console.error("[이메일 발송 실패]", {
         employeeId,
         subsidyType,
         error: result.error,
+      });
+
+      // 로깅: 발송 실패
+      await logNotification({
+        type: "SUBSIDY_DEADLINE",
+        recipientId: employee.userId,
+        recipientEmail: employee.email,
+        subject,
+        htmlBody: emailHtml,
+        success: false,
+        errorCode: result.error.name,
+        errorMessage: result.error.message,
+        relatedSubsidyId: subsidyId,
       });
 
       return {
@@ -142,6 +228,18 @@ export async function sendSubsidyDeadlineReminder(
       employeeName: employee.name,
       subsidyType,
       emailId: result.data?.id,
+    });
+
+    // 로깅: 발송 성공
+    await logNotification({
+      type: "SUBSIDY_DEADLINE",
+      recipientId: employee.userId,
+      recipientEmail: employee.email,
+      subject,
+      htmlBody: emailHtml,
+      success: true,
+      emailId: result.data?.id,
+      relatedSubsidyId: subsidyId,
     });
 
     return {
@@ -350,11 +448,26 @@ export async function sendApprovalRequest(
     });
 
     // 6. 발송 결과 처리
+    const subject = `[결재 요청] ${documentTypeName} - ${document.creator?.employee?.name || "알 수 없음"}`;
+
     if (result.error) {
       console.error("[결재 요청 이메일 발송 실패]", {
         approverId,
         documentId,
         error: result.error,
+      });
+
+      // 로깅: 발송 실패
+      await logNotification({
+        type: "APPROVAL_REQUEST",
+        recipientId: approverId,
+        recipientEmail: approver.email,
+        subject,
+        htmlBody: emailHtml,
+        success: false,
+        errorCode: result.error.name,
+        errorMessage: result.error.message,
+        relatedDocumentId: documentId,
       });
 
       return {
@@ -369,6 +482,18 @@ export async function sendApprovalRequest(
       documentId,
       documentTitle: document.title,
       emailId: result.data?.id,
+    });
+
+    // 로깅: 발송 성공
+    await logNotification({
+      type: "APPROVAL_REQUEST",
+      recipientId: approverId,
+      recipientEmail: approver.email,
+      subject,
+      htmlBody: emailHtml,
+      success: true,
+      emailId: result.data?.id,
+      relatedDocumentId: documentId,
     });
 
     return {
@@ -567,6 +692,19 @@ export async function sendApprovalResult(
         error: result.error,
       });
 
+      // 로깅: 발송 실패
+      await logNotification({
+        type: isApproved ? "DOCUMENT_APPROVED" : "DOCUMENT_REJECTED",
+        recipientId: creatorId,
+        recipientEmail: creator.email,
+        subject,
+        htmlBody: emailHtml,
+        success: false,
+        errorCode: result.error.name,
+        errorMessage: result.error.message,
+        relatedDocumentId: documentId,
+      });
+
       return {
         success: false,
         error: `이메일 발송 실패: ${result.error.message}`,
@@ -580,6 +718,18 @@ export async function sendApprovalResult(
       documentTitle: document.title,
       isApproved,
       emailId: result.data?.id,
+    });
+
+    // 로깅: 발송 성공
+    await logNotification({
+      type: isApproved ? "DOCUMENT_APPROVED" : "DOCUMENT_REJECTED",
+      recipientId: creatorId,
+      recipientEmail: creator.email,
+      subject,
+      htmlBody: emailHtml,
+      success: true,
+      emailId: result.data?.id,
+      relatedDocumentId: documentId,
     });
 
     return {
@@ -630,6 +780,7 @@ export async function sendPayrollStatementNotification(
           select: {
             name: true,
             email: true,
+            userId: true,
           },
         },
       },
@@ -708,12 +859,29 @@ export async function sendPayrollStatementNotification(
     });
 
     // 5. 발송 결과 처리
+    const subject = `[급여명세서] ${payrollRecord.year}년 ${payrollRecord.month}월 급여가 지급되었습니다.`;
+
     if (result.error) {
       console.error("[급여명세서 이메일 발송 실패]", {
         payrollRecordId,
         employeeName: payrollRecord.employee.name,
         error: result.error,
       });
+
+      // 로깅: 발송 실패
+      if (payrollRecord.employee.userId) {
+        await logNotification({
+          type: "PAYSLIP_READY",
+          recipientId: payrollRecord.employee.userId,
+          recipientEmail: payrollRecord.employee.email,
+          subject,
+          htmlBody: emailHtml,
+          success: false,
+          errorCode: result.error.name,
+          errorMessage: result.error.message,
+          relatedPayrollId: payrollRecordId,
+        });
+      }
 
       return {
         success: false,
@@ -728,6 +896,20 @@ export async function sendPayrollStatementNotification(
       month: payrollRecord.month,
       emailId: result.data?.id,
     });
+
+    // 로깅: 발송 성공
+    if (payrollRecord.employee.userId) {
+      await logNotification({
+        type: "PAYSLIP_READY",
+        recipientId: payrollRecord.employee.userId,
+        recipientEmail: payrollRecord.employee.email,
+        subject,
+        htmlBody: emailHtml,
+        success: true,
+        emailId: result.data?.id,
+        relatedPayrollId: payrollRecordId,
+      });
+    }
 
     return {
       success: true,
